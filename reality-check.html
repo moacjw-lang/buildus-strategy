@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>빌드어스 현실 점검 — Reality Check</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0f;
+    --card: #12121a;
+    --card-border: #1e1e2e;
+    --text: #e4e4e7;
+    --text-dim: #71717a;
+    --text-bright: #fafafa;
+    --accent: #6366f1;
+    --accent-glow: rgba(99, 102, 241, 0.15);
+    --green: #22c55e;
+    --green-dim: rgba(34, 197, 94, 0.12);
+    --yellow: #eab308;
+    --yellow-dim: rgba(234, 179, 8, 0.12);
+    --red: #ef4444;
+    --red-dim: rgba(239, 68, 68, 0.12);
+    --orange: #f97316;
+    --orange-dim: rgba(249, 115, 22, 0.12);
+    --blue: #3b82f6;
+    --blue-dim: rgba(59, 130, 246, 0.12);
+    --purple: #a855f7;
+    --purple-dim: rgba(168, 85, 247, 0.12);
+    --cyan: #06b6d4;
+    --cyan-dim: rgba(6, 182, 212, 0.12);
+    --pink: #ec4899;
+    --pink-dim: rgba(236, 72, 153, 0.12);
+  }
+
+  body {
+    font-family: 'Noto Sans KR', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 60px 24px 120px;
+  }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 80px 0 40px;
+  }
+  .hero-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: 44px;
+    font-weight: 900;
+    color: var(--text-bright);
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+  .hero .sub {
+    font-size: 16px;
+    color: var(--text-dim);
+    font-weight: 300;
+  }
+  .hero .warning-tag {
+    margin-top: 28px;
+    display: inline-block;
+    padding: 12px 28px;
+    background: var(--red-dim);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 30px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--red);
+  }
+
+  /* Severity indicator */
+  .severity {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    justify-content: center;
+    margin: 48px 0 16px;
+    flex-wrap: wrap;
+  }
+  .sev-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .sev-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+
+  /* Grade bar at top */
+  .grade-bar {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 48px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+  .grade-visual {
+    flex-shrink: 0;
+    text-align: center;
+  }
+  .grade-ring {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid var(--orange);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--orange-dim);
+  }
+  .grade-ring .letter {
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--orange);
+    line-height: 1;
+  }
+  .grade-ring .modifier {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--orange);
+    margin-top: 2px;
+  }
+  .grade-text h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-bright);
+    margin-bottom: 8px;
+  }
+  .grade-text p {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.8;
+  }
+
+  /* Section */
+  .section { margin-top: 64px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .section-num {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 1px;
+  }
+  .section-num.crit { background: var(--red-dim); color: var(--red); }
+  .section-num.warn { background: var(--orange-dim); color: var(--orange); }
+  .section-num.info { background: var(--yellow-dim); color: var(--yellow); }
+  .section-num.ok { background: var(--green-dim); color: var(--green); }
+  .section-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-bright);
+  }
+
+  /* Issue card */
+  .issue {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .issue-header {
+    padding: 24px 28px 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .issue-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-bright);
+  }
+  .issue-body {
+    padding: 16px 28px 28px;
+    font-size: 14px;
+    line-height: 1.9;
+  }
+  .issue-body p { margin-bottom: 12px; }
+  .issue-body ul { padding-left: 20px; margin: 8px 0; }
+  .issue-body li { margin-bottom: 4px; }
+  .issue-body li::marker { color: var(--text-dim); }
+  .issue-body strong { color: var(--text-bright); font-weight: 600; }
+
+  /* Badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .badge.critical { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .badge.serious { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(249,115,22,0.3); }
+  .badge.moderate { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(234,179,8,0.3); }
+  .badge.ok { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+
+  /* Callout */
+  .callout {
+    padding: 20px 24px;
+    border-radius: 12px;
+    margin: 16px 0;
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .callout.red { background: var(--red-dim); border-left: 4px solid var(--red); }
+  .callout.orange { background: var(--orange-dim); border-left: 4px solid var(--orange); }
+  .callout.yellow { background: var(--yellow-dim); border-left: 4px solid var(--yellow); }
+  .callout.green { background: var(--green-dim); border-left: 4px solid var(--green); }
+  .callout.blue { background: var(--blue-dim); border-left: 4px solid var(--blue); }
+  .callout.purple { background: var(--purple-dim); border-left: 4px solid var(--purple); }
+  .callout strong { color: var(--text-bright); }
+
+  /* Tables */
+  .t {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  .t th {
+    background: #1a1a26;
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--card-border);
+  }
+  .t th:first-child { border-radius: 10px 0 0 0; }
+  .t th:last-child { border-radius: 0 10px 0 0; }
+  .t td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--card-border);
+    vertical-align: top;
+  }
+  .t tr:last-child td { border-bottom: none; }
+  .t tr:last-child td:first-child { border-radius: 0 0 0 10px; }
+  .t tr:last-child td:last-child { border-radius: 0 0 10px 0; }
+  .t tbody tr { background: var(--card); }
+  .t tbody tr:hover { background: #16161f; }
+
+  /* Compare block */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .compare-box {
+    padding: 20px;
+    border-radius: 12px;
+    font-size: 14px;
+  }
+  .compare-box.plan { background: var(--red-dim); border: 1px solid rgba(239,68,68,0.15); }
+  .compare-box.real { background: var(--green-dim); border: 1px solid rgba(34,197,94,0.15); }
+  .compare-box .cmp-label {
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .compare-box.plan .cmp-label { color: var(--red); }
+  .compare-box.real .cmp-label { color: var(--green); }
+
+  /* Code block */
+  .code-block {
+    background: #0e0e17;
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    font-family: 'SF Mono', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text);
+    overflow-x: auto;
+    margin: 12px 0;
+  }
+
+  /* Score bars */
+  .score-row { display: flex; align-items: center; gap: 12px; margin: 6px 0; }
+  .score-name { font-size: 13px; color: var(--text); min-width: 140px; }
+  .score-track { flex: 1; height: 8px; background: #1e1e2e; border-radius: 4px; overflow: hidden; }
+  .score-fill { height: 100%; border-radius: 4px; }
+  .score-val { font-size: 13px; font-weight: 700; min-width: 60px; text-align: right; }
+
+  /* Divider */
+  .divider { border: none; border-top: 1px solid var(--card-border); margin: 24px 0; }
+
+  /* KPI grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .kpi-box {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 20px 16px;
+    text-align: center;
+  }
+  .kpi-box .kpi-label { font-size: 11px; color: var(--text-dim); font-weight: 500; margin-bottom: 6px; }
+  .kpi-box .kpi-value { font-size: 22px; font-weight: 900; }
+  .kpi-box .kpi-sub { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+  /* Final */
+  .final {
+    background: linear-gradient(135deg, #12121a 0%, #1a1a2e 100%);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 48px;
+    margin-top: 72px;
+  }
+  .final h2 { font-size: 26px; font-weight: 900; color: var(--text-bright); margin-bottom: 24px; text-align: center; }
+
+  /* Timeline compact */
+  .tl-compact {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .tl-item {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .tl-item.p1::before { background: var(--green); }
+  .tl-item.p2::before { background: var(--blue); }
+  .tl-item.p3::before { background: var(--purple); }
+  .tl-item .phase-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .tl-item .phase-title { font-size: 15px; font-weight: 700; color: var(--text-bright); margin-bottom: 8px; }
+  .tl-item ul { padding-left: 16px; font-size: 13px; }
+  .tl-item li { margin-bottom: 4px; }
+
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 28px; }
+    .grade-bar { flex-direction: column; text-align: center; }
+    .compare { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: 1fr; }
+    .tl-compact { grid-template-columns: 1fr; }
+    .issue-body { padding: 16px 20px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<div class="hero">
+  <div class="hero-label">Reality Check Report</div>
+  <h1>빌드어스<br>현실 점검</h1>
+  <div class="sub">아이디어 계획서에 대한 비판적 분석 &middot; 2026-03-28</div>
+  <div class="warning-tag">칭찬 없음. 구조적 문제만 짚습니다.</div>
+</div>
+
+<!-- Severity legend -->
+<div class="severity">
+  <div class="sev-item"><div class="sev-dot" style="background:var(--red);"></div> 치명적 — 이대로 가면 실패</div>
+  <div class="sev-item"><div class="sev-dot" style="background:var(--orange);"></div> 심각 — 반드시 수정 필요</div>
+  <div class="sev-item"><div class="sev-dot" style="background:var(--yellow);"></div> 주의 — 인지하고 대비</div>
+</div>
+
+<!-- Grade bar -->
+<div class="grade-bar">
+  <div class="grade-visual">
+    <div class="grade-ring">
+      <div class="letter">C+</div>
+      <div class="modifier">현실 등급</div>
+    </div>
+  </div>
+  <div class="grade-text">
+    <h2>계획서 등급 A- → 현실 보정 C+</h2>
+    <p>
+      아이디어 자체는 좋습니다. 해자도 있고, 방향도 맞습니다.
+      <strong>하지만 계획서의 수치 가정이 현실의 2~5배 과대평가되어 있고,
+      3명이 동시에 만들 수 있는 범위를 크게 초과합니다.</strong>
+      아이디어 등급 A-를 현실 등급 A-로 만들려면, 범위를 1/3로 줄이고 숫자를 현실에 맞춰야 합니다.
+    </p>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- PART 1: 숫자가 틀렸다 -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num crit">PART 1</span>
+    <span class="section-title">숫자가 틀렸다 — 수치 보정</span>
+  </div>
+
+  <!-- Issue 1 -->
+  <div class="issue">
+    <div class="issue-header">
+      <h3>1. 구매 전환율 8%는 비현실적</h3>
+      <span class="badge critical">치명적</span>
+    </div>
+    <div class="issue-body">
+      <p>이커머스 평균 구매 전환율은 <strong>1~3%</strong>입니다. 계획서의 8%는 이 수치의 3~8배.</p>
+
+      <div class="compare">
+        <div class="compare-box plan">
+          <div class="cmp-label">계획서 가정</div>
+          방문자 5,000 × <strong>전환율 8%</strong> = 400건 구매
+        </div>
+        <div class="compare-box real">
+          <div class="cmp-label">현실 보정</div>
+          방문자 5,000 × <strong>전환율 2~3%</strong> = 100~150건 구매
+        </div>
+      </div>
+
+      <p><strong>왜 8%가 안 되는가:</strong></p>
+      <ul>
+        <li>Wirecutter (최고의 가이드→커머스 모델)도 클릭률 3~7%, 그것도 아마존이라서 가능한 수치</li>
+        <li>한국 소비자의 기본 행동: 가이드에서 제품명 확인 → <strong>네이버 쇼핑에서 최저가 검색</strong></li>
+        <li>인테리어 자재는 범용 상품 — "OO브랜드 타일 본드"를 배우면 어디서든 살 수 있음</li>
+        <li>IKEA와 달리 <strong>구조적 잠금이 없음</strong> (IKEA 부품은 IKEA에서만 구매 가능)</li>
+      </ul>
+
+      <div class="callout red">
+        <strong>영향:</strong> 전환율이 8% → 3%로 내려가면, 같은 트래픽에서 매출이 <strong>62.5% 감소</strong>합니다.
+        수익 모델의 모든 계산이 달라집니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- Issue 2 -->
+  <div class="issue">
+    <div class="issue-header">
+      <h3>2. AOV 40만원은 3~4배 과대</h3>
+      <span class="badge critical">치명적</span>
+    </div>
+    <div class="issue-body">
+      <p>셀프 인테리어는 <strong>공정별로 나눠서 진행</strong>합니다. 한 번에 40만원어치를 사는 게 아닙니다.</p>
+
+      <table class="t">
+        <thead><tr><th>실제 구매 패턴</th><th>예상 금액</th></tr></thead>
+        <tbody>
+          <tr><td>"이번 주 욕실 방수" → 방수 키트</td><td>39,000원</td></tr>
+          <tr><td>"다음 주 타일" → 타일 + 본드 + 줄눈</td><td>15~20만원</td></tr>
+          <tr><td>공구류 (첫 구매 시)</td><td>5~10만원</td></tr>
+          <tr><td>페인트 + 도장 용품</td><td>5~8만원</td></tr>
+        </tbody>
+      </table>
+
+      <div class="compare">
+        <div class="compare-box plan">
+          <div class="cmp-label">계획서 가정</div>
+          AOV <strong>40만원</strong>
+        </div>
+        <div class="compare-box real">
+          <div class="cmp-label">현실 보정</div>
+          AOV <strong>8~15만원</strong> (공정별 분할 구매)
+        </div>
+      </div>
+
+      <div class="callout red">
+        <strong>복합 영향 (전환율 + AOV 동시 보정):</strong><br><br>
+        계획서: 5,000 × 8% × 40만 = <strong>월 GMV 1.6억 → 매출 3,200만원</strong><br>
+        현실: 5,000 × 3% × 12만 = <strong>월 GMV 1,800만원 → 매출 360만원</strong><br><br>
+        <strong>9배 차이.</strong> 같은 유입이라도 실제 매출은 계획의 1/9 수준.
+      </div>
+    </div>
+  </div>
+
+  <!-- Issue 3 -->
+  <div class="issue">
+    <div class="issue-header">
+      <h3>3. 6개월에 월 5,000명 유입은 안 된다</h3>
+      <span class="badge serious">심각</span>
+    </div>
+    <div class="issue-body">
+      <p><strong>SEO:</strong></p>
+      <ul>
+        <li>새 도메인이 유의미한 검색 유입을 받기까지 <strong>최소 6~12개월</strong></li>
+        <li>"인테리어 비용" 키워드는 네이버 블로그/집닥/오늘의집이 이미 점령</li>
+        <li>아파트별 비용 데이터는 좋은 전략이지만, 한 사람의 추정치 vs 실제 통계 → <strong>신뢰도 문제</strong></li>
+      </ul>
+
+      <p><strong>유튜브:</strong></p>
+      <ul>
+        <li>인테리어 유튜브 1,000구독 달성까지 평균 <strong>3~6개월</strong></li>
+        <li>유튜브 → 웹 전환율 <strong>0.1~0.9%</strong></li>
+        <li>구독자 1만 × 0.5% = 유튜브에서 월 <strong>50명 유입</strong> — 의미 없는 수준</li>
+      </ul>
+
+      <div class="compare">
+        <div class="compare-box plan">
+          <div class="cmp-label">계획서</div>
+          6개월 후 월 <strong>5,000명</strong>
+        </div>
+        <div class="compare-box real">
+          <div class="cmp-label">현실 보정</div>
+          6개월 후 월 <strong>500~1,500명</strong><br>
+          12개월 후 월 <strong>2,000~4,000명</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reality revenue calc -->
+  <div class="issue">
+    <div class="issue-header">
+      <h3>보정된 매출 추정</h3>
+      <span class="badge critical">핵심</span>
+    </div>
+    <div class="issue-body">
+      <table class="t">
+        <thead><tr><th>항목</th><th>계획서</th><th>현실 보정</th><th>차이</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>6개월 후 월 방문자</td>
+            <td>5,000명</td>
+            <td style="color:var(--orange);font-weight:700;">1,000명</td>
+            <td style="color:var(--red);">-80%</td>
+          </tr>
+          <tr>
+            <td>구매 전환율</td>
+            <td>8%</td>
+            <td style="color:var(--orange);font-weight:700;">3%</td>
+            <td style="color:var(--red);">-62%</td>
+          </tr>
+          <tr>
+            <td>AOV</td>
+            <td>40만원</td>
+            <td style="color:var(--orange);font-weight:700;">12만원</td>
+            <td style="color:var(--red);">-70%</td>
+          </tr>
+          <tr>
+            <td>월 GMV</td>
+            <td>1.6억원</td>
+            <td style="color:var(--orange);font-weight:700;">360만원</td>
+            <td style="color:var(--red);">-97.8%</td>
+          </tr>
+          <tr>
+            <td><strong>월 매출 (마진 20%)</strong></td>
+            <td><strong>3,200만원</strong></td>
+            <td style="color:var(--red);font-weight:900;">72만원</td>
+            <td style="color:var(--red);">-97.8%</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout red">
+        <strong>6개월 시점 현실:</strong> 월 매출 72만원. 인건비는커녕 서버 비용도 안 됩니다.<br>
+        12개월 시점 (방문 3,000명으로 성장 시): 3,000 × 3% × 12만 = 1,080만원 GMV → <strong>월 매출 216만원.</strong><br><br>
+        이건 "실패"가 아니라 <strong>스타트업의 정상적인 초기 궤적</strong>입니다.
+        문제는 계획서가 이 현실을 반영하지 않아서 기대치가 잘못 설정되는 것입니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- PART 2: 구조적 문제 -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num warn">PART 2</span>
+    <span class="section-title">구조적 문제 — 비즈니스 모델</span>
+  </div>
+
+  <!-- Issue 4 -->
+  <div class="issue">
+    <div class="issue-header">
+      <h3>4. "쿠팡은 경쟁자가 아니다"는 반만 맞다</h3>
+      <span class="badge serious">심각</span>
+    </div>
+    <div class="issue-body">
+      <p>대표님 말이 맞는 부분: <strong>시공업체는 쿠팡에서 안 삼.</strong><br>
+      하지만 빌드어스 타겟은 업체가 아니라 <strong>소비자(셀프/반셀프)</strong>입니다.</p>
+
+      <table class="t">
+        <thead><tr><th>자재 유형</th><th>소비자가 사는 곳</th><th>빌드어스 우위</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>페인트, 마스킹, 실리콘, 기본 공구</td>
+            <td style="color:var(--red);font-weight:600;">쿠팡 (로켓배송 내일 도착)</td>
+            <td style="color:var(--red);">없음</td>
+          </tr>
+          <tr>
+            <td>타일, 방수재, 전문 본드, 마루</td>
+            <td>네이버 스마트스토어 / 전문몰</td>
+            <td style="color:var(--green);font-weight:600;">있음 (업체가 수준)</td>
+          </tr>
+          <tr>
+            <td>대형 자재 (시멘트, 석고보드 등)</td>
+            <td>동네 건재상 / 유통사</td>
+            <td style="color:var(--yellow);">제한적 (배송 문제)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout orange">
+        <strong>정확한 표현:</strong> "쿠팡이 경쟁자가 아니다"가 아니라
+        <strong>"쿠팡이 약한 전문 자재 영역에서만 우위가 있다."</strong>
+        범용 자재에서는 쿠팡 로켓배송을 이길 수 없습니다.
+        그리고 범용 자재가 셀프빌더 구매의 30~40%를 차지합니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- Issue 5 -->
+  <div class="issue">
+    <div class="issue-header">
+      <h3>5. "업체가 = 소비자가" 갭이 모든 자재에 있진 않다</h3>
+      <span class="badge serious">심각</span>
+    </div>
+    <div class="issue-body">
+      <p>"인터넷가 대비 20~30% 저렴"은 <strong>일부 자재에만 해당</strong>합니다.</p>
+
+      <div class="score-row">
+        <span class="score-name">타일/석재</span>
+        <div class="score-track"><div class="score-fill" style="width:80%;background:var(--green);"></div></div>
+        <span class="score-val" style="color:var(--green);">갭 큼</span>
+      </div>
+      <div class="score-row">
+        <span class="score-name">방수재/전문 본드</span>
+        <div class="score-track"><div class="score-fill" style="width:70%;background:var(--green);"></div></div>
+        <span class="score-val" style="color:var(--green);">갭 큼</span>
+      </div>
+      <div class="score-row">
+        <span class="score-name">마루/바닥재</span>
+        <div class="score-track"><div class="score-fill" style="width:50%;background:var(--yellow);"></div></div>
+        <span class="score-val" style="color:var(--yellow);">갭 중간</span>
+      </div>
+      <div class="score-row">
+        <span class="score-name">페인트 (삼화/노루)</span>
+        <div class="score-track"><div class="score-fill" style="width:20%;background:var(--red);"></div></div>
+        <span class="score-val" style="color:var(--red);">갭 거의 없음</span>
+      </div>
+      <div class="score-row">
+        <span class="score-name">공구/소모품</span>
+        <div class="score-track"><div class="score-fill" style="width:10%;background:var(--red);"></div></div>
+        <span class="score-val" style="color:var(--red);">갭 없음</span>
+      </div>
+
+      <p style="margin-top:12px;">빌드어스에서 파는 자재 중 <strong>가격 우위가 확실한 것은 30~40%</strong> 수준일 수 있습니다.
+      나머지 60~70%는 "여기서 사야 할 이유"가 약합니다.</p>
+    </div>
+  </div>
+
+  <!-- Issue 6 -->
+  <div class="issue">
+    <div class="issue-header">
+      <h3>6. 구조적 잠금(Lock-in)이 없다</h3>
+      <span class="badge serious">심각</span>
+    </div>
+    <div class="issue-body">
+      <table class="t">
+        <thead><tr><th>플랫폼</th><th>잠금 메커니즘</th><th>전환 비용</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>IKEA</strong></td>
+            <td>IKEA 부품은 IKEA에서만 구매 가능</td>
+            <td style="color:var(--green);font-weight:600;">매우 높음</td>
+          </tr>
+          <tr>
+            <td><strong>쿠팡</strong></td>
+            <td>로켓와우 멤버십 (월정액 선결제)</td>
+            <td style="color:var(--green);font-weight:600;">높음</td>
+          </tr>
+          <tr>
+            <td><strong>오늘의집</strong></td>
+            <td>포인트 적립, 집들이 커뮤니티</td>
+            <td style="color:var(--yellow);">중간</td>
+          </tr>
+          <tr>
+            <td><strong>빌드어스</strong></td>
+            <td>???</td>
+            <td style="color:var(--red);font-weight:600;">없음</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>빌드어스의 가치 = "뭘 사야 하는지 알려주고 + 싸게 팔고"</p>
+      <p>문제: 이 두 가치 모두 <strong>다른 곳에서 대체 가능</strong>합니다.
+      가이드를 다 봤으면 뭘 사야 하는지 알게 됨 → 어디서든 구매 가능.</p>
+
+      <div class="callout orange">
+        <strong>유일하게 잠금이 작동하는 것:</strong> "키트"<br>
+        이 조합을 다른 곳에서 직접 구성하기 귀찮음 → 키트에서 사는 게 편함.<br>
+        키트가 킬러인 진짜 이유가 여기에 있습니다. <strong>하지만 키트만으로 전체 사업을 지탱하기엔 SKU가 너무 제한적.</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Issue 7 -->
+  <div class="issue">
+    <div class="issue-header">
+      <h3>7. 실제 TAM이 생각보다 작다</h3>
+      <span class="badge moderate">주의</span>
+    </div>
+    <div class="issue-body">
+      <div class="code-block">
+한국 연간 아파트 인테리어:              약 30만 건
+셀프/반셀프 비율 (15~20%):              4.5~6만 건/년
+온라인 플랫폼 사용 의향 (50%):          2.5~3만 건/년
+빌드어스 시장 점유율 5% (매우 낙관적):   1,250~1,500건/년
+
+= 월 100~125건
+
+× AOV 12만원 = 월 GMV 1,200~1,500만원
+× 마진 20% = <strong>월 매출 240~300만원</strong>
+      </div>
+
+      <p>"셀프빌더만 타겟"하면 실질 TAM이 <strong>사이드 프로젝트 수준</strong>입니다.<br>
+      견적 비교 분석기로 일반 소비자(80%)까지 넓히는 것은 좋은 방향이지만, 그 전환율(일반 소비자 → 반셀프)은 미검증.</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- PART 3: 실행 문제 -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num info">PART 3</span>
+    <span class="section-title">실행 문제 — 만들 수 있는가</span>
+  </div>
+
+  <!-- Issue 8 -->
+  <div class="issue">
+    <div class="issue-header">
+      <h3>8. 3명이 Phase 1을 다 만들 수 없다</h3>
+      <span class="badge critical">치명적</span>
+    </div>
+    <div class="issue-body">
+      <p>Phase 1에 나열된 10개 기능은 사실상 <strong>5~6개의 별도 프로덕트</strong>입니다.</p>
+
+      <table class="t">
+        <thead><tr><th>기능</th><th>실제 개발 범위</th><th>개발자 1명 기준</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>비용 분석기</td>
+            <td>이미지 선택 UI + 자재 매핑 알고리즘 + 리포트 생성</td>
+            <td>6~10주</td>
+          </tr>
+          <tr>
+            <td>이커머스 마켓플레이스</td>
+            <td>상품 카탈로그, 결제, 배송 연동, 주문관리, 환불</td>
+            <td>12~20주</td>
+          </tr>
+          <tr>
+            <td>AI 챗봇</td>
+            <td>RAG 파이프라인, 프롬프트 튜닝, 자재 연결 UI</td>
+            <td>3~5주</td>
+          </tr>
+          <tr>
+            <td>프로젝트 관리</td>
+            <td>체크리스트, 예산 트래커, 사진 업로드, 대시보드</td>
+            <td>6~10주</td>
+          </tr>
+          <tr>
+            <td>견적 비교 분석기</td>
+            <td>항목 입력 UI, 비교 로직, 결과 리포트</td>
+            <td>3~5주</td>
+          </tr>
+          <tr>
+            <td>아파트별 비용 DB + SEO</td>
+            <td>데이터 수집, CMS, 랜딩 페이지 SEO 최적화</td>
+            <td>2~4주</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p><strong>합계: 32~54주 (8~13개월)</strong> — 개발자 1명이 다른 일 안 하고 풀타임 개발만 할 때.</p>
+
+      <div class="callout red">
+        <strong>6개월에 가능한 것 (현실적):</strong><br>
+        비용 분석기 + 키트 쇼핑몰(카페24/Shopify 기반) + AI 챗봇 MVP.<br>
+        <strong>이것도 빡빡합니다.</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Issue 9 -->
+  <div class="issue">
+    <div class="issue-header">
+      <h3>9. 키트 실행 복잡도를 과소평가</h3>
+      <span class="badge moderate">주의</span>
+    </div>
+    <div class="issue-body">
+      <p>"방수 키트 39,000원" — 깔끔해 보이지만:</p>
+      <ul>
+        <li>욕실 크기마다 방수액 양이 다름 → <strong>사이즈별 SKU 필요</strong> (1평/2평/3평용)</li>
+        <li>키트 안에 하나라도 불량이면 <strong>전체 반품</strong> → 반품 비용 3~5배</li>
+        <li>구성품 하나가 품절 → <strong>키트 전체 판매 중지</strong></li>
+        <li>"도구 포함/미포함" 옵션만 해도 SKU 2배</li>
+      </ul>
+
+      <div class="code-block">
+키트 5종 × 사이즈 3종 × 도구옵션 2종 = <strong>30개 SKU</strong>
+
+각 SKU마다:
+- 구성품 재고 동기화
+- 패킹 작업
+- 품질 검수
+- 반품/교환 처리
+
+= 한 명의 풀타임 업무
+      </div>
+    </div>
+  </div>
+
+  <!-- Issue 10 -->
+  <div class="issue">
+    <div class="issue-header">
+      <h3>10. CS 인프라가 완전히 빠져 있다</h3>
+      <span class="badge serious">심각</span>
+    </div>
+    <div class="issue-body">
+      <p>이커머스에서 CS는 "부가 기능"이 아니라 <strong>핵심 운영</strong>입니다.</p>
+      <ul>
+        <li>"이 자재 우리 집에 맞나요?" "배송 언제 오나요?" "색상이 다릅니다"</li>
+        <li>건축자재 반품은 <strong>무겁고 비쌈</strong> (30kg+ 택배 불가한 것도 있음)</li>
+        <li>월 100건 주문 → CS 문의 <strong>20~40건</strong> (이커머스 평균 문의율 20~40%)</li>
+        <li>시공 관련 문의가 들어오면? "이거 어떻게 시공해요?" — 답변에 시간 소요 큼</li>
+      </ul>
+
+      <div class="callout orange">
+        <strong>계획서에 CS가 한 줄도 없습니다.</strong><br>
+        이커머스를 해본 사람이라면 "CS 때문에 못 하겠다"가 가장 먼저 나올 이야기입니다.
+        3명 팀에서 CS 전담은 불가능합니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- PART 4: 그래도 강점 -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num ok">PART 4</span>
+    <span class="section-title">그래도 되는 이유 — 진짜 강점</span>
+  </div>
+
+  <div class="issue">
+    <div class="issue-header">
+      <h3>비판 속에서도 흔들리지 않는 것들</h3>
+      <span class="badge ok">강점</span>
+    </div>
+    <div class="issue-body">
+      <table class="t">
+        <thead><tr><th>강점</th><th>왜 진짜인가</th><th>비판으로도 안 깨지는 이유</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>유통사 보유</strong></td>
+            <td>자재 원가/품질/호환성을 누구보다 정확히 앎</td>
+            <td>이건 돈/시간으로 따라잡을 수 없는 해자</td>
+          </tr>
+          <tr>
+            <td><strong>키트 컨셉</strong></td>
+            <td>한국에 "공정별 자재 키트"를 파는 곳이 0개</td>
+            <td>수치 가정이 틀려도, 이 상품 자체의 가치는 유효</td>
+          </tr>
+          <tr>
+            <td><strong>체크리스트 16개</strong></td>
+            <td>400+ 항목의 현장 지식 데이터베이스</td>
+            <td>AI 챗봇의 지식 기반으로 고유한 가치 제공</td>
+          </tr>
+          <tr>
+            <td><strong>업계 내부자 포지션</strong></td>
+            <td>인테리어 업체 + 유통사 동시 운영</td>
+            <td>가이드/키트/가격의 세 가지 모두의 소스</td>
+          </tr>
+          <tr>
+            <td><strong>"실패하지 않는다" 포지셔닝</strong></td>
+            <td>가격이 아닌 전문성으로 차별화</td>
+            <td>쿠팡이 따라올 수 없는 방향이 맞음</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout green">
+        <strong>핵심:</strong> 아이디어와 해자는 진짜입니다.
+        문제는 아이디어가 아니라 <strong>실행 범위와 수치 가정</strong>입니다.
+        범위를 줄이고 숫자를 현실에 맞추면, 이건 됩니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- FINAL: 현실적 수정 제안 -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="final">
+  <h2>현실적 수정 제안</h2>
+
+  <div class="callout purple" style="text-align:left;margin-bottom:24px;">
+    <strong>핵심 원칙: 10개를 30%로 만들지 말고, 3개를 100%로 만들어라.</strong>
+  </div>
+
+  <!-- Modified Phase -->
+  <div class="tl-compact">
+    <div class="tl-item p1">
+      <div class="phase-label" style="color:var(--green);">Phase 1 (수정) — 0~6개월</div>
+      <div class="phase-title">3개만 100%로</div>
+      <ul>
+        <li><strong>키트 쇼핑몰</strong> (카페24 기반, 키트 5종 + 개별 자재 TOP 50)</li>
+        <li><strong>비용 분석기</strong> (견적 → 키트 연결)</li>
+        <li><strong>AI 챗봇 MVP</strong> (체크리스트 RAG + 자재 추천)</li>
+        <li>유튜브 시작 (가이드 + 데이터)</li>
+      </ul>
+    </div>
+    <div class="tl-item p2">
+      <div class="phase-label" style="color:var(--blue);">Phase 2 (수정) — 6~12개월</div>
+      <div class="phase-title">검증 후 확장</div>
+      <ul>
+        <li>자체 마켓플레이스 개발</li>
+        <li>프로젝트 관리 도구</li>
+        <li>견적 비교 분석기</li>
+        <li>샘플 배송 서비스</li>
+        <li>아파트별 비용 DB</li>
+      </ul>
+    </div>
+    <div class="tl-item p3">
+      <div class="phase-label" style="color:var(--purple);">Phase 3 (수정) — 12개월+</div>
+      <div class="phase-title">스케일</div>
+      <ul>
+        <li>제조사 광고</li>
+        <li>프리미엄 구독</li>
+        <li>공동구매</li>
+        <li>레벨 시스템</li>
+        <li>기능공 추천</li>
+      </ul>
+    </div>
+  </div>
+
+  <hr style="border:none;border-top:1px solid var(--card-border);margin:32px 0;">
+
+  <h3 style="font-size:18px;font-weight:700;color:var(--text-bright);margin-bottom:16px;">수정된 수치 목표</h3>
+
+  <div class="kpi-grid">
+    <div class="kpi-box">
+      <div class="kpi-label">6개월 월 방문자</div>
+      <div class="kpi-value" style="color:var(--orange);">1,000</div>
+      <div class="kpi-sub"><span style="text-decoration:line-through;color:var(--text-dim);">5,000</span></div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-label">구매 전환율</div>
+      <div class="kpi-value" style="color:var(--orange);">3%</div>
+      <div class="kpi-sub"><span style="text-decoration:line-through;color:var(--text-dim);">8%</span></div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-label">AOV</div>
+      <div class="kpi-value" style="color:var(--orange);">12<span style="font-size:14px;color:var(--text-dim);">만</span></div>
+      <div class="kpi-sub"><span style="text-decoration:line-through;color:var(--text-dim);">40만</span></div>
+    </div>
+  </div>
+
+  <table class="t" style="max-width:700px;margin:20px auto;">
+    <thead><tr><th>시점</th><th>월 방문</th><th>월 구매건수</th><th>월 GMV</th><th>월 매출</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>6개월</td>
+        <td>1,000</td>
+        <td>30건</td>
+        <td>360만원</td>
+        <td>72만원</td>
+      </tr>
+      <tr>
+        <td>12개월</td>
+        <td>3,000</td>
+        <td>90건</td>
+        <td>1,080만원</td>
+        <td style="color:var(--yellow);font-weight:700;">216만원</td>
+      </tr>
+      <tr>
+        <td>18개월</td>
+        <td>8,000</td>
+        <td>320건</td>
+        <td>3,840만원</td>
+        <td style="color:var(--green);font-weight:700;">768만원</td>
+      </tr>
+      <tr>
+        <td>24개월</td>
+        <td>15,000</td>
+        <td>600건</td>
+        <td>7,200만원</td>
+        <td style="color:var(--green);font-weight:700;">1,440만원</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout yellow" style="text-align:left;max-width:700px;margin:24px auto;">
+    <strong>현실적 BEP: 18~24개월</strong> (계획서의 12~18개월이 아님)<br><br>
+    이건 나쁜 숫자가 아닙니다. 대부분의 이커머스 스타트업이 이 궤적을 따릅니다.<br>
+    <strong>중요한 건 "이게 현실이다"를 알고 시작하는 것</strong>입니다.<br>
+    환상적인 숫자로 시작하면 6개월 후 좌절하고, 현실적 숫자로 시작하면 작은 성장도 동기가 됩니다.
+  </div>
+
+  <hr style="border:none;border-top:1px solid var(--card-border);margin:32px 0;">
+
+  <h3 style="font-size:18px;font-weight:700;color:var(--text-bright);margin-bottom:16px;">Phase 1에서 가장 먼저 검증해야 할 것</h3>
+
+  <table class="t" style="max-width:700px;margin:20px auto;">
+    <thead><tr><th>#</th><th>가설</th><th>검증 방법</th><th>성공 기준</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td><strong>"키트를 사겠다"</strong></td>
+        <td>키트 5종 제작 → 스마트스토어에 올려서 판매 (플랫폼 없이)</td>
+        <td>월 30건 이상 판매</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><strong>"가이드 보고 여기서 산다"</strong></td>
+        <td>유튜브 영상 5개 → 설명란에 키트 링크 → 전환 추적</td>
+        <td>클릭률 2%+ / 구매 전환 5%+</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><strong>"비용 분석기 때문에 온다"</strong></td>
+        <td>비용 분석기 MVP → 랜딩 페이지 → Google Ads 소액 테스트</td>
+        <td>분석 완료 후 자재 클릭 20%+</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout green" style="text-align:left;max-width:700px;margin:24px auto;">
+    <strong>최종 판단:</strong><br><br>
+    아이디어 = <strong>A-</strong> (진짜 좋음)<br>
+    현재 계획의 실행 가능성 = <strong>D</strong> (범위 과대, 수치 비현실적)<br>
+    수정 후 실행 가능성 = <strong>B+</strong> (3개 집중 + 현실 수치)<br><br>
+    <strong>"10개 기능을 만드는 사업"이 아니라 "키트 5종을 파는 사업"으로 시작하세요.</strong><br>
+    키트가 팔리면 나머지는 자연스럽게 따라옵니다. 키트가 안 팔리면 나머지를 만들어도 의미 없습니다.
+  </div>
+
+  <p style="font-size:13px;color:var(--text-dim);margin-top:32px;text-align:center;">
+    빌드어스 현실 점검 &middot; 2026-03-28<br>
+    아이디어 계획서(idea-plan.html) + 리서치 리포트(research-report.html) 기반 비판적 분석
+  </p>
+</div>
+
+</div><!-- /container -->
+
+</body>
+</html>
