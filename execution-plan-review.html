@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>실행 계획 v2 — 검토 보고서</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg:#0a0a0f; --card:#12121a; --card-border:#1e1e2e;
+    --text:#e4e4e7; --text-dim:#71717a; --text-bright:#fafafa;
+    --accent:#6366f1; --accent-glow:rgba(99,102,241,0.15);
+    --green:#22c55e; --green-dim:rgba(34,197,94,0.12);
+    --yellow:#eab308; --yellow-dim:rgba(234,179,8,0.12);
+    --red:#ef4444; --red-dim:rgba(239,68,68,0.12);
+    --orange:#f97316; --orange-dim:rgba(249,115,22,0.12);
+    --blue:#3b82f6; --blue-dim:rgba(59,130,246,0.12);
+    --purple:#a855f7; --purple-dim:rgba(168,85,247,0.12);
+    --cyan:#06b6d4; --cyan-dim:rgba(6,182,212,0.12);
+  }
+  body { font-family:'Noto Sans KR',-apple-system,sans-serif; background:var(--bg); color:var(--text); line-height:1.7; -webkit-font-smoothing:antialiased; }
+  .container { max-width:960px; margin:0 auto; padding:60px 24px 120px; }
+
+  /* Hero */
+  .hero { text-align:center; padding:80px 0 24px; }
+  .hero-label { font-size:12px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--red); margin-bottom:16px; }
+  .hero h1 { font-size:40px; font-weight:900; color:var(--text-bright); line-height:1.2; margin-bottom:12px; }
+  .hero .sub { font-size:15px; color:var(--text-dim); font-weight:300; }
+
+  /* Verdict */
+  .verdict { display:flex; gap:16px; margin:40px 0 20px; flex-wrap:wrap; }
+  .verdict-box { flex:1; min-width:200px; background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:24px; text-align:center; }
+  .verdict-box .num { font-size:36px; font-weight:900; line-height:1; }
+  .verdict-box .label { font-size:12px; color:var(--text-dim); margin-top:6px; font-weight:500; }
+
+  /* Section */
+  .section { margin-top:56px; }
+  .section-header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .section-tag { font-size:11px; font-weight:700; padding:4px 10px; border-radius:6px; letter-spacing:1px; }
+  .section-tag.good { background:var(--green-dim); color:var(--green); }
+  .section-tag.issue { background:var(--red-dim); color:var(--red); }
+  .section-tag.fix { background:var(--blue-dim); color:var(--blue); }
+  .section-title { font-size:24px; font-weight:700; color:var(--text-bright); }
+  .section-desc { font-size:14px; color:var(--text-dim); margin-bottom:20px; padding-left:0; }
+
+  /* Cards */
+  .card { background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:28px 32px; margin-bottom:16px; }
+  .card h3 { font-size:17px; font-weight:700; color:var(--text-bright); margin-bottom:10px; }
+
+  /* Issue card */
+  .issue-card { background:var(--card); border:1px solid var(--card-border); border-radius:16px; margin-bottom:20px; overflow:hidden; }
+  .issue-header { display:flex; align-items:center; gap:14px; padding:22px 28px; border-bottom:1px solid var(--card-border); }
+  .issue-num { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:900; color:#fff; flex-shrink:0; }
+  .issue-meta h3 { font-size:17px; font-weight:700; color:var(--text-bright); margin:0; }
+  .issue-meta p { font-size:13px; color:var(--text-dim); margin:2px 0 0; }
+  .issue-body { padding:24px 28px; }
+
+  /* Callouts */
+  .callout { padding:16px 20px; border-radius:12px; font-size:13px; line-height:1.8; margin:12px 0; }
+  .callout.red { background:var(--red-dim); border-left:3px solid var(--red); }
+  .callout.green { background:var(--green-dim); border-left:3px solid var(--green); }
+  .callout.yellow { background:var(--yellow-dim); border-left:3px solid var(--yellow); }
+  .callout.blue { background:var(--blue-dim); border-left:3px solid var(--blue); }
+  .callout.accent { background:var(--accent-glow); border-left:3px solid var(--accent); }
+  .callout.orange { background:var(--orange-dim); border-left:3px solid var(--orange); }
+
+  /* Tables */
+  .t { width:100%; border-collapse:collapse; font-size:13px; }
+  .t th { text-align:left; padding:10px 12px; background:rgba(255,255,255,0.03); color:var(--text-dim); font-weight:600; font-size:11px; letter-spacing:0.5px; text-transform:uppercase; border-bottom:1px solid var(--card-border); }
+  .t td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.03); vertical-align:top; }
+
+  /* Compare */
+  .compare { display:grid; grid-template-columns:1fr 24px 1fr; gap:0; align-items:center; margin:12px 0; }
+  .compare-box { padding:16px 20px; border-radius:12px; font-size:13px; }
+  .compare-box.before { background:var(--red-dim); border:1px solid rgba(239,68,68,0.2); }
+  .compare-box.after { background:var(--green-dim); border:1px solid rgba(34,197,94,0.2); }
+  .compare-arrow { text-align:center; font-size:18px; color:var(--text-dim); }
+  .compare-box .label { font-size:11px; font-weight:700; letter-spacing:0.5px; margin-bottom:6px; }
+  .compare-box.before .label { color:var(--red); }
+  .compare-box.after .label { color:var(--green); }
+
+  /* Flow */
+  .flow { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:12px 0; }
+  .flow-step { background:rgba(255,255,255,0.04); border:1px solid var(--card-border); border-radius:10px; padding:10px 16px; font-size:12px; font-weight:600; color:var(--text-bright); }
+  .flow-step.highlight { border-color:var(--green); background:var(--green-dim); color:var(--green); }
+  .flow-step.sale { border-color:var(--orange); background:var(--orange-dim); color:var(--orange); }
+  .flow-arrow { font-size:16px; color:var(--text-dim); }
+
+  /* Kit priority */
+  .kit-list { list-style:none; padding:0; counter-reset:kit; }
+  .kit-list li { counter-increment:kit; display:flex; align-items:center; gap:14px; padding:14px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:13px; }
+  .kit-list li:last-child { border-bottom:none; }
+  .kit-list li::before { content:counter(kit); width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:900; color:#fff; flex-shrink:0; }
+  .kit-list li:nth-child(1)::before { background:linear-gradient(135deg,#16a34a,#22c55e); }
+  .kit-list li:nth-child(2)::before { background:linear-gradient(135deg,#0d9488,#14b8a6); }
+  .kit-list li:nth-child(3)::before { background:linear-gradient(135deg,#2563eb,#3b82f6); }
+  .kit-list li:nth-child(4)::before { background:linear-gradient(135deg,#7c3aed,#a855f7); }
+  .kit-list li:nth-child(5)::before { background:linear-gradient(135deg,#9333ea,#c084fc); }
+  .kit-name { font-weight:700; color:var(--text-bright); min-width:80px; }
+  .kit-reason { color:var(--text-dim); }
+
+  /* Badge */
+  .badge { display:inline-block; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; }
+  .badge.ceo { background:var(--orange-dim); color:var(--orange); }
+  .badge.dev { background:var(--blue-dim); color:var(--blue); }
+  .badge.dist { background:var(--green-dim); color:var(--green); }
+  .badge.asst { background:var(--purple-dim); color:var(--purple); }
+
+  /* Severity */
+  .severity { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; padding:3px 10px; border-radius:6px; }
+  .severity.high { background:var(--red-dim); color:var(--red); }
+  .severity.mid { background:var(--yellow-dim); color:var(--yellow); }
+  .severity.low { background:var(--blue-dim); color:var(--blue); }
+
+  ul { padding-left:20px; }
+  li { margin-bottom:4px; font-size:13px; }
+  strong.g { color:var(--green); }
+  strong.r { color:var(--red); }
+  strong.o { color:var(--orange); }
+  strong.b { color:var(--blue); }
+
+  .final { margin-top:80px; text-align:center; padding:48px 0; border-top:1px solid var(--card-border); }
+  .final h2 { font-size:22px; font-weight:900; color:var(--text-bright); margin-bottom:20px; }
+
+  .step-mini { display:flex; gap:4px; flex-wrap:wrap; margin:8px 0; }
+  .step-mini span { font-size:11px; padding:4px 10px; border-radius:6px; font-weight:600; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-label">Review Report</div>
+  <h1>실행 계획 v2 검토</h1>
+  <div class="sub">큰 방향은 맞지만, 실행 가능하려면 8가지를 고쳐야 한다 &middot; 2026-03-29</div>
+</div>
+
+<!-- Verdict -->
+<div class="verdict">
+  <div class="verdict-box">
+    <div class="num" style="color:var(--green);">4</div>
+    <div class="label">잘 된 점</div>
+  </div>
+  <div class="verdict-box">
+    <div class="num" style="color:var(--red);">8</div>
+    <div class="label">수정 필요</div>
+  </div>
+  <div class="verdict-box">
+    <div class="num" style="color:var(--yellow);">3</div>
+    <div class="label">높은 심각도</div>
+  </div>
+  <div class="verdict-box">
+    <div class="num" style="color:var(--blue);">5</div>
+    <div class="label">중간 심각도</div>
+  </div>
+</div>
+
+
+<!-- ════════════ 잘 된 점 ════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-tag good">GOOD</span>
+    <span class="section-title">잘 된 점</span>
+  </div>
+  <div class="section-desc">v2의 핵심 프레임워크는 정확하다.</div>
+
+  <div class="card">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <h3 style="color:var(--green);">1. 자원 기반 접근</h3>
+        <p style="font-size:13px;color:var(--text-dim);">"뭘 할까"가 아니라 "누가 뭘 갖고 있나"에서 출발. 4인 팀에 딱 맞는 구조.</p>
+      </div>
+      <div>
+        <h3 style="color:var(--green);">2. 개발을 기다리지 않는다</h3>
+        <p style="font-size:13px;color:var(--text-dim);">스마트스토어 즉시 판매 + 유튜브 병행. 개발 전 매출 구조는 정확한 판단.</p>
+      </div>
+      <div>
+        <h3 style="color:var(--green);">3. 의존성 시각화</h3>
+        <p style="font-size:13px;color:var(--text-dim);">섹션 04에서 "누가 안 하면 누가 못 함"을 명확히 보여줌. 병목 인식 정확.</p>
+      </div>
+      <div>
+        <h3 style="color:var(--green);">4. 개발 순서</h3>
+        <p style="font-size:13px;color:var(--text-dim);">마켓플레이스 → 비용분석기 → SEO → 챗봇 → 프로젝트관리. 수익 순서대로 맞음.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════ 문제점들 ════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-tag issue">ISSUES</span>
+    <span class="section-title">수정이 필요한 8가지</span>
+  </div>
+  <div class="section-desc">실행 가능한 계획이 되려면 아래를 고쳐야 한다.</div>
+
+  <!-- Issue 1 -->
+  <div class="issue-card" style="border-color:rgba(239,68,68,0.3);">
+    <div class="issue-header">
+      <div class="issue-num" style="background:linear-gradient(135deg,#dc2626,#ef4444);">1</div>
+      <div class="issue-meta">
+        <h3>STEP 1 내부 순서가 없다</h3>
+        <p><span class="severity high">높음</span> &nbsp;실행 불가능의 가장 큰 원인</p>
+      </div>
+    </div>
+    <div class="issue-body">
+      <p style="font-size:13px;margin-bottom:16px;">
+        대표에게 5개 대형 작업이 <strong class="r">동시에</strong> 부여됨. 유통도 4개. 어시도 4개.
+        뭘 먼저 해야 하는지 모르면 각자 알아서 하게 되고, 의존성이 꼬인다.
+      </p>
+
+      <div class="callout red">
+        <strong>현재 문제:</strong><br>
+        대표가 키트 구성을 안 끝냈는데 유통이 원가 계산을 시작할 수 없음.<br>
+        유통이 자재 목록을 안 줬는데 어시가 인터넷 최저가 조사를 할 수 없음.<br>
+        → <strong>STEP 1 안에서도 순서가 있다.</strong>
+      </div>
+
+      <h3 style="margin-top:20px;font-size:15px;">수정안: STEP 1을 A→B→C로 세분화</h3>
+      <div class="flow">
+        <div class="flow-step highlight">1-A<br><span style="font-size:11px;font-weight:400;">키트 1종 확정<br>(대표+유통 공동)</span></div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-step">1-B<br><span style="font-size:11px;font-weight:400;">유통: 원가+제작<br>어시: 사진/설명/인터넷가</span></div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-step sale">1-C<br><span style="font-size:11px;font-weight:400;">스마트스토어 오픈<br>판매 시작!</span></div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-step">1-D<br><span style="font-size:11px;font-weight:400;">대표: 가이드 1편<br>유튜브 촬영 가능</span></div>
+        <span class="flow-arrow">&rarr;</span>
+        <div class="flow-step">1-E<br><span style="font-size:11px;font-weight:400;">나머지 키트 4종<br>순차 확장</span></div>
+      </div>
+      <p style="font-size:12px;color:var(--text-dim);margin-top:8px;">개발자는 1-A~C와 병행으로 DB 스키마 + 와이어프레임</p>
+    </div>
+  </div>
+
+  <!-- Issue 2 -->
+  <div class="issue-card" style="border-color:rgba(239,68,68,0.3);">
+    <div class="issue-header">
+      <div class="issue-num" style="background:linear-gradient(135deg,#dc2626,#ef4444);">2</div>
+      <div class="issue-meta">
+        <h3>숫자가 너무 크다 — 스코프 비현실적</h3>
+        <p><span class="severity high">높음</span> &nbsp;50이라는 숫자가 4번 반복됨</p>
+      </div>
+    </div>
+    <div class="issue-body">
+      <p style="font-size:13px;margin-bottom:16px;">
+        STEP 1에서 "TOP 50 자재", "호환성 50종", "아파트 50개 단지", "SEO 키워드 50개".
+        4인 팀이 처음부터 이걸 다 하면 첫 판매가 몇 달 뒤로 밀린다.
+      </p>
+
+      <table class="t">
+        <thead><tr><th>현재 계획</th><th>현실적 시작점</th><th>이유</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--red);">TOP 50 자재</td>
+            <td style="color:var(--green);font-weight:700;">키트 자재 25~30종</td>
+            <td>키트에 없는 자재는 아직 안 팔림</td>
+          </tr>
+          <tr>
+            <td style="color:var(--red);">호환성 50종</td>
+            <td style="color:var(--green);font-weight:700;">키트 자재 간 호환성만</td>
+            <td>안 파는 자재의 호환성은 의미 없음</td>
+          </tr>
+          <tr>
+            <td style="color:var(--red);">시공 가이드 16편</td>
+            <td style="color:var(--green);font-weight:700;">키트 해당 공정 5편</td>
+            <td>가이드도 파는 공정부터</td>
+          </tr>
+          <tr>
+            <td style="color:var(--red);">아파트 50개 단지</td>
+            <td style="color:var(--green);font-weight:700;">대표적 10개</td>
+            <td>SEO 효과 보고 확대</td>
+          </tr>
+          <tr>
+            <td style="color:var(--red);">SEO 키워드 50개</td>
+            <td style="color:var(--green);font-weight:700;">키트 관련 10~15개</td>
+            <td>할 수 있는 양부터</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout green" style="margin-top:16px;">
+        <strong>원칙:</strong> 키트 5종에 해당하는 것만 먼저.
+        나머지는 <strong>판매 반응</strong>을 보고 확장.
+      </div>
+    </div>
+  </div>
+
+  <!-- Issue 3 -->
+  <div class="issue-card" style="border-color:rgba(239,68,68,0.3);">
+    <div class="issue-header">
+      <div class="issue-num" style="background:linear-gradient(135deg,#dc2626,#ef4444);">3</div>
+      <div class="issue-meta">
+        <h3>키트 구성이 양방향인데 단방향으로 표시됨</h3>
+        <p><span class="severity high">높음</span> &nbsp;의존성 다이어그램이 실제와 다름</p>
+      </div>
+    </div>
+    <div class="issue-body">
+      <div class="compare">
+        <div class="compare-box before">
+          <div class="label">현재 (단방향)</div>
+          <span class="badge ceo">대표</span> 키트 구성 확정
+          &nbsp;&rarr;&nbsp;
+          <span class="badge dist">유통</span> 제작
+        </div>
+        <div class="compare-arrow">&rarr;</div>
+        <div class="compare-box after">
+          <div class="label">실제 (양방향)</div>
+          <span class="badge ceo">대표</span> "방수에 이것들이 한 세트"<br>
+          <span class="badge dist">유통</span> "그 브랜드 지금 못 구함"<br>
+          &rarr; <strong>둘이 같이 앉아서 조정</strong>
+        </div>
+      </div>
+
+      <p style="font-size:13px;margin-top:12px;">
+        대표가 구성품을 정해도, 유통이 <strong>구할 수 없거나 마진이 안 나오는 자재</strong>면 바꿔야 함.
+        키트 구성은 <strong class="o">대표</strong>와 <strong class="g">유통</strong>이 같이 하는 공동 작업이다.
+      </p>
+
+      <div class="callout orange">
+        <strong>수정:</strong> 의존성 다이어그램에서 키트 구성을
+        <span class="badge ceo">대표</span> + <span class="badge dist">유통</span> <strong>공동 작업</strong>으로 변경.
+        어시가 회의 내용 기록.
+      </div>
+    </div>
+  </div>
+
+  <!-- Issue 4 -->
+  <div class="issue-card" style="border-color:rgba(234,179,8,0.3);">
+    <div class="issue-header">
+      <div class="issue-num" style="background:linear-gradient(135deg,#ca8a04,#eab308);">4</div>
+      <div class="issue-meta">
+        <h3>키트 5종을 동시에 만들 필요 없다</h3>
+        <p><span class="severity mid">중간</span> &nbsp;첫 판매 시점이 불필요하게 늦어짐</p>
+      </div>
+    </div>
+    <div class="issue-body">
+      <p style="font-size:13px;margin-bottom:16px;">
+        현재 계획은 5종을 한꺼번에 만들고 한꺼번에 오픈하는 구조.
+        실제로는 <strong>1종 완성 → 바로 판매 → 나머지 순차 추가</strong>가 맞다.
+      </p>
+
+      <h3 style="font-size:15px;margin-bottom:12px;">키트 우선순위 제안 (쉬운 것부터)</h3>
+      <ul class="kit-list">
+        <li>
+          <div><span class="kit-name">줄눈 보수</span><span class="kit-reason">구성품 적음 (3~5종), 가격 낮음, 수요 큼, 실패 위험 낮음</span></div>
+        </li>
+        <li>
+          <div><span class="kit-name">도장 (페인트)</span><span class="kit-reason">셀프 인테리어 시도 1위 공정, 도구 키트 구성 명확</span></div>
+        </li>
+        <li>
+          <div><span class="kit-name">방수</span><span class="kit-reason">욕실 누수 공포 → 검색량 높음, 차별화 포인트 (전문가 가이드)</span></div>
+        </li>
+        <li>
+          <div><span class="kit-name">타일 보수</span><span class="kit-reason">깨짐/들뜸 대응, 부분 보수용 소량 키트</span></div>
+        </li>
+        <li>
+          <div><span class="kit-name">마루 보수</span><span class="kit-reason">스크래치/파손 대응, 보수재+도구 세트</span></div>
+        </li>
+      </ul>
+
+      <div class="callout green" style="margin-top:16px;">
+        <strong>효과:</strong> 줄눈 키트 1종이면 1~2주 안에 판매 시작 가능.
+        5종 다 될 때까지 기다리면 한 달 이상 걸림.
+        <br><strong>1종 팔면서 다음 키트를 만든다.</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Issue 5 -->
+  <div class="issue-card" style="border-color:rgba(234,179,8,0.3);">
+    <div class="issue-header">
+      <div class="issue-num" style="background:linear-gradient(135deg,#ca8a04,#eab308);">5</div>
+      <div class="issue-meta">
+        <h3>체크리스트 Q&A 변환 — 3단계나 빠르다</h3>
+        <p><span class="severity mid">중간</span> &nbsp;어시 리소스 낭비</p>
+      </div>
+    </div>
+    <div class="issue-body">
+      <div class="compare">
+        <div class="compare-box before">
+          <div class="label">현재 배치</div>
+          <strong>STEP 1</strong>에 체크리스트 Q&A 변환<br>
+          AI 챗봇은 <strong>STEP 4</strong> (개발 순서 4번째)
+        </div>
+        <div class="compare-arrow">&rarr;</div>
+        <div class="compare-box after">
+          <div class="label">수정안</div>
+          <strong>STEP 3</strong>으로 이동<br>
+          STEP 1에서 어시는 <strong>대표/유통 문서화에 100%</strong>
+        </div>
+      </div>
+
+      <p style="font-size:13px;margin-top:12px;">
+        3단계나 앞서서 Q&A를 만들면 그 사이에 체크리스트 자체가 보정될 수 있음.
+        STEP 1에서 어시의 시간은 <strong>대표와 유통 옆에서 받아적는 데</strong> 전부 써야 함.
+      </p>
+    </div>
+  </div>
+
+  <!-- Issue 6 -->
+  <div class="issue-card" style="border-color:rgba(234,179,8,0.3);">
+    <div class="issue-header">
+      <div class="issue-num" style="background:linear-gradient(135deg,#ca8a04,#eab308);">6</div>
+      <div class="issue-meta">
+        <h3>검증/피드백 루프가 없다</h3>
+        <p><span class="severity mid">중간</span> &nbsp;첫 키트 판매 후 보정 기회를 놓침</p>
+      </div>
+    </div>
+    <div class="issue-body">
+      <p style="font-size:13px;margin-bottom:16px;">
+        스마트스토어에서 키트 팔기 시작하면 고객 반응이 바로 온다.
+        이걸 수집해서 다음 키트에 반영하는 루프가 계획에 없다.
+      </p>
+
+      <div class="card" style="background:rgba(255,255,255,0.02);margin:0;">
+        <h3 style="font-size:14px;">피드백이 주는 정보</h3>
+        <table class="t">
+          <thead><tr><th>피드백 유형</th><th>보정 대상</th><th>예시</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>고객 질문</td>
+              <td>가이드에 빠진 내용</td>
+              <td>"이 방수재 몇 시간 말려야 해요?"</td>
+            </tr>
+            <tr>
+              <td>구성품 불만</td>
+              <td>키트 구성</td>
+              <td>"솔이 너무 작아요" → 다음 키트 도구 업그레이드</td>
+            </tr>
+            <tr>
+              <td>가격 피드백</td>
+              <td>마진 구조</td>
+              <td>"쿠팡이 더 싸요" → 가격 경쟁력 재확인</td>
+            </tr>
+            <tr>
+              <td>반품/교환</td>
+              <td>포장/배송</td>
+              <td>파손 → 패키징 보강</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout yellow" style="margin-top:16px;">
+        <strong>수정:</strong> STEP 1-C (판매 시작) 후 <strong>"1차 피드백 수집 → 보정"</strong> 단계 추가.
+        어시가 CS 데이터 정리 → 대표+유통이 키트/가이드 보정 → 다음 키트에 반영.
+      </div>
+    </div>
+  </div>
+
+  <!-- Issue 7 -->
+  <div class="issue-card" style="border-color:rgba(59,130,246,0.3);">
+    <div class="issue-header">
+      <div class="issue-num" style="background:linear-gradient(135deg,#2563eb,#3b82f6);">7</div>
+      <div class="issue-meta">
+        <h3>유튜브 시작 시점이 STEP 2에 묶여 있다</h3>
+        <p><span class="severity low">낮음</span> &nbsp;더 빨리 시작 가능</p>
+      </div>
+    </div>
+    <div class="issue-body">
+      <p style="font-size:13px;margin-bottom:12px;">
+        STEP 2에 유튜브를 배치했지만, 시공 가이드 16편이 전부 끝나야 촬영할 수 있는 것처럼 보임.
+      </p>
+
+      <div class="callout blue">
+        <strong>실제로는:</strong><br>
+        키트 1종 해당 가이드 <strong>1편만 있으면 바로 촬영</strong> 가능.<br>
+        STEP 1 후반부터 유튜브 시작 → STEP 2까지 기다릴 필요 없음.<br>
+        "줄눈 보수 이렇게 하세요" 하나만 있으면 됨.
+      </div>
+    </div>
+  </div>
+
+  <!-- Issue 8 -->
+  <div class="issue-card" style="border-color:rgba(59,130,246,0.3);">
+    <div class="issue-header">
+      <div class="issue-num" style="background:linear-gradient(135deg,#2563eb,#3b82f6);">8</div>
+      <div class="issue-meta">
+        <h3>비용 분석기 데이터 복잡도가 과소평가됨</h3>
+        <p><span class="severity low">낮음</span> &nbsp;STEP 3에서 마주칠 문제, 지금은 인지만</p>
+      </div>
+    </div>
+    <div class="issue-body">
+      <p style="font-size:13px;margin-bottom:12px;">
+        현재 계획에서 비용 분석기의 데이터 소스는 "공정-자재 매핑 + 가격"으로 단순하게 표현됨.
+        실제로는 훨씬 복잡한 매핑이 필요함:
+      </p>
+
+      <div class="card" style="background:rgba(255,255,255,0.02);margin:0;">
+        <p style="font-size:13px;line-height:2;">
+          <strong class="b">공간 유형</strong> (욕실/주방/거실/방) &times;
+          <strong class="o">스타일</strong> (모던/클래식/미니멀) &times;
+          <strong class="g">자재 등급</strong> (경제형/표준/프리미엄) &times;
+          <strong>면적</strong>
+          = <strong class="r">비용 추정</strong>
+        </p>
+      </div>
+
+      <p style="font-size:13px;margin-top:12px;color:var(--text-dim);">
+        STEP 1에서 "공정-자재 매핑"만 만들면 비용 분석기에 바로 쓸 수 없음.
+        대표가 STEP 3 시점에 <strong>스타일별/등급별 자재 변형</strong> 데이터를 추가로 만들어야 함.
+        지금 당장은 안 해도 되지만, 계획에 인지는 시켜놓아야 함.
+      </p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════ 수정 방향 요약 ════════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-tag fix">FIX</span>
+    <span class="section-title">수정 방향 요약</span>
+  </div>
+  <div class="section-desc">8개 이슈를 반영하면 실행 계획이 이렇게 바뀐다.</div>
+
+  <div class="card">
+    <table class="t">
+      <thead><tr><th style="width:30px;">#</th><th>수정 내용</th><th>영향 범위</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--red);font-weight:900;">1</td>
+          <td><strong>STEP 1 내부를 A→B→C→D→E로 세분화</strong></td>
+          <td>STEP 1 전체 재구성</td>
+        </tr>
+        <tr>
+          <td style="color:var(--red);font-weight:900;">2</td>
+          <td><strong>50 → 키트 관련 것만 먼저</strong> (자재 25~30, 가이드 5편, 아파트 10개)</td>
+          <td>STEP 1 대표/유통/어시 업무량</td>
+        </tr>
+        <tr>
+          <td style="color:var(--red);font-weight:900;">3</td>
+          <td><strong>키트 구성 = 대표+유통 공동작업</strong>으로 변경</td>
+          <td>의존성 다이어그램, STEP 1-A</td>
+        </tr>
+        <tr>
+          <td style="color:var(--yellow);font-weight:900;">4</td>
+          <td><strong>키트 1종 → 판매 → 순차 확장</strong> 전략</td>
+          <td>STEP 1 구조, 판매 시점</td>
+        </tr>
+        <tr>
+          <td style="color:var(--yellow);font-weight:900;">5</td>
+          <td><strong>Q&A 변환은 STEP 3으로 이동</strong></td>
+          <td>어시 STEP 1 업무, STEP 3 어시 업무</td>
+        </tr>
+        <tr>
+          <td style="color:var(--yellow);font-weight:900;">6</td>
+          <td><strong>피드백 루프 추가</strong> (1차 판매 → 보정 → 2차 확장)</td>
+          <td>STEP 1~2 사이 새 단계</td>
+        </tr>
+        <tr>
+          <td style="color:var(--blue);font-weight:900;">7</td>
+          <td><strong>유튜브 시작 = 키트 1종 가이드 완성 시점</strong></td>
+          <td>STEP 1-D, STEP 2 대표 업무</td>
+        </tr>
+        <tr>
+          <td style="color:var(--blue);font-weight:900;">8</td>
+          <td><strong>비용 분석기 데이터 복잡도 명시</strong></td>
+          <td>STEP 3 대표 업무에 추가</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout accent" style="margin-top:8px;">
+    <strong>수정 후 핵심 변화:</strong><br><br>
+    <strong>Before:</strong> 5종 키트 + 50개씩 전부 만들고 → 한꺼번에 오픈<br>
+    <strong>After:</strong> 줄눈 키트 <strong>1종만 빠르게 완성 → 바로 판매 → 반응 보고 확장</strong><br><br>
+    첫 판매까지의 시간이 <strong class="r">수 주</strong>에서 <strong class="g">1~2주</strong>로 단축됨.
+  </div>
+</div>
+
+
+<!-- FINAL -->
+<div class="final">
+  <h2>결론</h2>
+  <div class="callout accent" style="text-align:left;max-width:720px;margin:24px auto;">
+    <strong style="font-size:16px;">큰 방향은 맞다. 실행 단위를 줄여야 한다.</strong><br><br>
+
+    "자원 기반 접근"과 "개발 전 판매"는 정확한 프레임워크.<br>
+    문제는 <strong>STEP 1에 너무 많은 걸 담았다</strong>는 것.<br><br>
+
+    <strong>키트 1종 완성 → 판매 시작 → 피드백 → 다음 키트</strong><br>
+    이 사이클이 돌아야 나머지가 의미를 갖는다.<br><br>
+
+    50개씩 준비하다 보면 첫 판매가 계속 밀린다.<br>
+    <strong>작게 시작해서 빨리 파는 게 이 팀의 강점</strong>이다.
+  </div>
+
+  <p style="font-size:13px;color:var(--text-dim);margin-top:24px;">
+    빌드어스 실행 계획 v2 검토 보고서 &middot; 2026-03-29
+  </p>
+</div>
+
+</div>
+</body>
+</html>

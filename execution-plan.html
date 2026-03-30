@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>빌드어스 실행 계획 v2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg:#0a0a0f; --card:#12121a; --card-border:#1e1e2e;
+    --text:#e4e4e7; --text-dim:#71717a; --text-bright:#fafafa;
+    --accent:#6366f1; --accent-glow:rgba(99,102,241,0.15);
+    --green:#22c55e; --green-dim:rgba(34,197,94,0.12);
+    --yellow:#eab308; --yellow-dim:rgba(234,179,8,0.12);
+    --red:#ef4444; --red-dim:rgba(239,68,68,0.12);
+    --orange:#f97316; --orange-dim:rgba(249,115,22,0.12);
+    --blue:#3b82f6; --blue-dim:rgba(59,130,246,0.12);
+    --purple:#a855f7; --purple-dim:rgba(168,85,247,0.12);
+    --cyan:#06b6d4; --cyan-dim:rgba(6,182,212,0.12);
+    --pink:#ec4899; --pink-dim:rgba(236,72,153,0.12);
+  }
+  body { font-family:'Noto Sans KR',-apple-system,sans-serif; background:var(--bg); color:var(--text); line-height:1.7; -webkit-font-smoothing:antialiased; }
+  .container { max-width:960px; margin:0 auto; padding:60px 24px 120px; }
+
+  .hero { text-align:center; padding:80px 0 40px; }
+  .hero-label { font-size:12px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:16px; }
+  .hero h1 { font-size:42px; font-weight:900; color:var(--text-bright); line-height:1.2; margin-bottom:12px; }
+  .hero .sub { font-size:15px; color:var(--text-dim); font-weight:300; }
+
+  .section { margin-top:64px; }
+  .section-header { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .section-num { font-size:11px; font-weight:700; color:var(--accent); background:var(--accent-glow); padding:4px 10px; border-radius:6px; letter-spacing:1px; }
+  .section-title { font-size:26px; font-weight:700; color:var(--text-bright); }
+  .section-desc { font-size:14px; color:var(--text-dim); margin-bottom:24px; padding-left:50px; }
+
+  .card { background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:28px 32px; margin-bottom:16px; }
+  .card h3 { font-size:18px; font-weight:700; color:var(--text-bright); margin-bottom:12px; }
+  .card h4 { font-size:14px; font-weight:700; color:var(--text-dim); margin:20px 0 8px; text-transform:uppercase; letter-spacing:0.5px; }
+  .card h4:first-child { margin-top:0; }
+
+  .t { width:100%; border-collapse:collapse; font-size:13px; }
+  .t th { text-align:left; padding:10px 12px; background:rgba(255,255,255,0.03); color:var(--text-dim); font-weight:600; font-size:11px; letter-spacing:0.5px; text-transform:uppercase; border-bottom:1px solid var(--card-border); }
+  .t td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.03); vertical-align:top; }
+
+  .badge { display:inline-block; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; }
+  .badge.ceo { background:var(--orange-dim); color:var(--orange); }
+  .badge.dev { background:var(--blue-dim); color:var(--blue); }
+  .badge.dist { background:var(--green-dim); color:var(--green); }
+  .badge.asst { background:var(--purple-dim); color:var(--purple); }
+
+  .callout { padding:16px 20px; border-radius:12px; font-size:13px; line-height:1.7; margin:12px 0; }
+  .callout.accent { background:var(--accent-glow); border-left:3px solid var(--accent); }
+  .callout.success { background:var(--green-dim); border-left:3px solid var(--green); }
+  .callout.warn { background:var(--yellow-dim); border-left:3px solid var(--yellow); }
+  .callout.info { background:var(--blue-dim); border-left:3px solid var(--blue); }
+  .callout.danger { background:var(--red-dim); border-left:3px solid var(--red); }
+  .callout.orange { background:var(--orange-dim); border-left:3px solid var(--orange); }
+
+  .asset-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:16px 0; }
+  .asset-box { background:rgba(255,255,255,0.02); border:1px solid var(--card-border); border-radius:12px; padding:20px; }
+  .asset-box h4 { font-size:14px; font-weight:700; margin:0 0 10px; text-transform:none; letter-spacing:0; }
+  .asset-box ul { padding-left:18px; margin:0; }
+  .asset-box li { font-size:12px; color:var(--text-dim); margin-bottom:4px; }
+  .asset-box li strong { color:var(--text); }
+
+  .step-card { background:var(--card); border:1px solid var(--card-border); border-radius:16px; margin-bottom:20px; overflow:hidden; }
+  .step-header { display:flex; align-items:center; gap:16px; padding:24px 28px; border-bottom:1px solid var(--card-border); }
+  .step-num { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:900; color:#fff; flex-shrink:0; }
+  .step-meta h3 { font-size:18px; font-weight:700; color:var(--text-bright); }
+  .step-meta p { font-size:13px; color:var(--text-dim); }
+  .step-body { padding:24px 28px; }
+
+  .task-block { margin-bottom:20px; }
+  .task-block-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .task-item { display:flex; align-items:flex-start; gap:8px; padding:6px 0; font-size:13px; border-bottom:1px solid rgba(255,255,255,0.02); }
+  .task-item:last-child { border-bottom:none; }
+  .task-check { color:var(--text-dim); flex-shrink:0; margin-top:2px; }
+  .task-item .output { font-size:11px; color:var(--cyan); margin-top:2px; }
+
+  .arrow-box { background:rgba(255,255,255,0.02); border:1px solid var(--card-border); border-radius:10px; padding:16px 20px; font-size:13px; margin:12px 0; line-height:2; }
+  .arrow-box .a { color:var(--green); font-weight:700; }
+  .arrow-box .n { color:var(--text-bright); }
+
+  .final { margin-top:80px; text-align:center; padding:48px 0; border-top:1px solid var(--card-border); }
+  .final h2 { font-size:22px; font-weight:900; color:var(--text-bright); margin-bottom:20px; }
+
+  ul { padding-left:20px; }
+  li { margin-bottom:4px; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-label">Execution Plan v2</div>
+  <h1>빌드어스 실행 계획</h1>
+  <div class="sub">각 팀원이 가진 자원 기준 &middot; 2026-03-29</div>
+</div>
+
+
+<!-- ═══════════ 01. 팀원별 자원 ═══════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <span class="section-title">각자 뭘 갖고 있는가</span>
+  </div>
+  <div class="section-desc">실행 계획은 "뭘 할까"가 아니라 "누가 뭘 갖고 있는지"에서 시작한다.</div>
+
+  <div class="asset-grid">
+    <!-- 대표 -->
+    <div class="asset-box" style="border-color:rgba(249,115,22,0.3);">
+      <h4 style="color:var(--orange);"><span class="badge ceo">대표</span> &nbsp;인테리어 전문 지식</h4>
+      <ul>
+        <li><strong>16개 공정 체크리스트</strong> (400+ 항목, 이미 정리됨)</li>
+        <li><strong>공정별 시공 순서/방법</strong> — 머릿속에 있는 현장 경험 5년치</li>
+        <li><strong>자재-공정 매핑</strong> — "방수에 뭐가 필요한지" 알고 있음</li>
+        <li><strong>호환성 지식</strong> — "이 본드 위에 이 타일 안 됨" 등</li>
+        <li><strong>도면/공정표</strong> — 실제 프로젝트 기반 정리 가능</li>
+        <li><strong>아파트별 비용 감각</strong> — 현장 경험 기반 추정</li>
+        <li><strong>얼굴/목소리</strong> — 유튜브 출연 가능</li>
+        <li><strong>키트 구성 판단</strong> — "방수에 이것들이 한 세트" 결정권</li>
+      </ul>
+    </div>
+    <!-- 유통 -->
+    <div class="asset-box" style="border-color:rgba(34,197,94,0.3);">
+      <h4 style="color:var(--green);"><span class="badge dist">유통</span> &nbsp;자재 + 가격 + 물류</h4>
+      <ul>
+        <li><strong>자재 카탈로그</strong> — 품명, 규격, 브랜드, 제조사</li>
+        <li><strong>도매가/업체가</strong> — 실제 매입 단가</li>
+        <li><strong>소비자가 갭</strong> — 인터넷가 대비 얼마나 싼지</li>
+        <li><strong>공급사/제조사 네트워크</strong> — 입점 협상 가능</li>
+        <li><strong>배송 인프라</strong> — 택배/화물 배송 체계</li>
+        <li><strong>재고 관리 노하우</strong></li>
+        <li><strong>샘플 확보 능력</strong> — 타일/마루/페인트 실물</li>
+        <li><strong>키트 원가 계산</strong> — 마진 구조 세팅</li>
+      </ul>
+    </div>
+    <!-- 개발자 -->
+    <div class="asset-box" style="border-color:rgba(59,130,246,0.3);">
+      <h4 style="color:var(--blue);"><span class="badge dev">개발자</span> &nbsp;기술 구현력</h4>
+      <ul>
+        <li><strong>웹/앱 개발</strong> — 혼자 풀스택으로 만듦</li>
+        <li><strong>AI/RAG 파이프라인</strong> — 챗봇 구축 가능</li>
+        <li><strong>이커머스 시스템</strong> — 결제, 주문, 배송 연동</li>
+        <li><strong>데이터 시각화</strong> — 비용 분석 리포트 등</li>
+        <li>위 3명이 만든 데이터를 <strong>제품으로 변환</strong>하는 사람</li>
+        <li style="color:var(--red);">단, 혼자이므로 <strong>한 번에 하나만</strong> 가능</li>
+      </ul>
+    </div>
+    <!-- 어시 -->
+    <div class="asset-box" style="border-color:rgba(168,85,247,0.3);">
+      <h4 style="color:var(--purple);"><span class="badge asst">어시</span> &nbsp;범용 실행력</h4>
+      <ul>
+        <li><strong>데이터 정리/입력</strong> — 엑셀, 노션, 어디든</li>
+        <li><strong>인터넷 조사</strong> — 경쟁사 가격, SEO 키워드 등</li>
+        <li><strong>콘텐츠 작성</strong> — 상품 설명, 블로그, SEO 글</li>
+        <li><strong>CS 대응</strong> — 주문/배송/자재 문의</li>
+        <li><strong>잡무 전반</strong> — 사진 촬영, 패키징 보조 등</li>
+        <li>핵심: 대표/유통의 <strong>머릿속 지식을 문서화</strong>하는 역할</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout accent">
+    <strong>이게 왜 중요한가:</strong><br>
+    개발자는 빈 플랫폼을 만드는 게 아니라, <strong>대표의 전문 지식 + 유통의 자재 데이터</strong>가 들어간 플랫폼을 만드는 것이다.
+    데이터가 먼저 준비되지 않으면 개발자는 껍데기만 만들게 됨.
+  </div>
+</div>
+
+
+<!-- ═══════════ 02. 만들어야 할 데이터 ═══════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <span class="section-title">플랫폼에 들어갈 데이터</span>
+  </div>
+  <div class="section-desc">개발 전에 만들어야 하는 "원재료". 누가 만들 수 있는지가 정해져 있다.</div>
+
+  <div class="card">
+    <table class="t">
+      <thead><tr><th>데이터</th><th>내용</th><th>만들 수 있는 사람</th><th>들어가는 곳</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--text-bright);font-weight:600;">자재 목록 + 가격</td>
+          <td>품명, 규격, 브랜드, 도매가, 업체가, 소비자가</td>
+          <td><span class="badge dist">유통</span></td>
+          <td>마켓플레이스, 비용 분석기</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-bright);font-weight:600;">공정별 필요 자재</td>
+          <td>"방수 공정에는 방수액 + 부직포 + 롤러 + ..."</td>
+          <td><span class="badge ceo">대표</span></td>
+          <td>키트 구성, 비용 분석기, 챗봇</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-bright);font-weight:600;">자재 호환성</td>
+          <td>"이 방수재 위에 이 본드 OK/NG"</td>
+          <td><span class="badge ceo">대표</span></td>
+          <td>마켓플레이스, 챗봇</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-bright);font-weight:600;">공정별 시공 가이드</td>
+          <td>시공 순서, 주의사항, 양생 시간, 실패 포인트</td>
+          <td><span class="badge ceo">대표</span></td>
+          <td>가이드 페이지, 챗봇, 유튜브</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-bright);font-weight:600;">키트 구성 + 원가</td>
+          <td>5종 키트 구성품, 원가, 판매가, 마진</td>
+          <td><span class="badge ceo">대표</span> + <span class="badge dist">유통</span></td>
+          <td>마켓플레이스 (킬러 상품)</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-bright);font-weight:600;">아파트별 비용 추정</td>
+          <td>"래미안 25평 욕실 방수 = 약 OO만원"</td>
+          <td><span class="badge ceo">대표</span></td>
+          <td>SEO 랜딩, 비용 분석기</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-bright);font-weight:600;">인터넷 최저가 조사</td>
+          <td>쿠팡/네이버 기준 자재별 소비자가</td>
+          <td><span class="badge asst">어시</span></td>
+          <td>가격 투명성 UI ("OO원 절약")</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-bright);font-weight:600;">체크리스트 Q&A 변환</td>
+          <td>기존 체크리스트를 "질문-답변" 쌍으로 재구성</td>
+          <td><span class="badge asst">어시</span> (대표 감수)</td>
+          <td>AI 챗봇 RAG 소스</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-bright);font-weight:600;">상품 사진 + 설명</td>
+          <td>자재 실물 사진, 상세 설명 텍스트</td>
+          <td><span class="badge asst">어시</span> + <span class="badge dist">유통</span></td>
+          <td>마켓플레이스, 스마트스토어</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text-bright);font-weight:600;">공정표/도면 자료</td>
+          <td>표준 공정 순서, 공정간 의존성, 예상 일정</td>
+          <td><span class="badge ceo">대표</span></td>
+          <td>프로젝트 관리 도구, 공정 알림</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn" style="margin-top:16px;">
+      <strong>현실:</strong> 이 데이터의 80%는 대표와 유통의 <strong>머릿속에만</strong> 있다.
+      문서로 뽑아내는 게 가장 먼저 할 일이고, 가장 오래 걸리는 일이다.
+      어시스턴트의 핵심 역할 = <strong>이 두 사람 옆에 붙어서 받아적는 것</strong>.
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════ 03. 실행 순서 ═══════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <span class="section-title">실행 순서</span>
+  </div>
+  <div class="section-desc">데이터가 먼저, 개발이 다음. 개발 없이 팔 수 있는 건 바로 판다.</div>
+
+  <!-- STEP 1 -->
+  <div class="step-card" style="border-color:rgba(234,179,8,0.3);">
+    <div class="step-header">
+      <div class="step-num" style="background:linear-gradient(135deg,#ca8a04,#eab308);">1</div>
+      <div class="step-meta">
+        <h3>데이터 뽑기 + 즉시 판매</h3>
+        <p>대표와 유통의 머릿속을 문서로 꺼낸다. 동시에 스마트스토어로 먼저 판다.</p>
+      </div>
+    </div>
+    <div class="step-body">
+
+      <div class="task-block">
+        <div class="task-block-header"><span class="badge ceo">대표</span><span style="font-size:13px;color:var(--text-dim);margin-left:8px;">— 현장 지식 문서화</span></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>키트 5종 구성 확정</strong> — "방수에는 이것들이 한 세트다" 결정<div class="output">산출물: 키트별 구성품 리스트 → 유통에게 전달</div></div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>공정별 필요 자재 매핑</strong> — 16개 공정 × 필요 자재 목록<div class="output">산출물: 공정-자재 매핑 테이블 → 비용 분석기의 핵심 엔진</div></div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>자재 호환성 데이터</strong> — 주요 자재 50종 간 OK/NG 매트릭스<div class="output">산출물: 호환성 테이블 → 마켓플레이스 경고 시스템</div></div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>공정별 시공 가이드 원고</strong> — 순서, 주의사항, 실패 포인트<div class="output">산출물: 가이드 텍스트 16편 → 상품 상세페이지 + 유튜브 대본</div></div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>아파트별 비용 추정</strong> — 경험 기반 50개 단지<div class="output">산출물: 단지별 비용 데이터 → SEO 랜딩 + 비용 분석기</div></div></div>
+      </div>
+
+      <div class="task-block">
+        <div class="task-block-header"><span class="badge dist">유통</span><span style="font-size:13px;color:var(--text-dim);margin-left:8px;">— 자재 데이터 + 즉시 판매</span></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>TOP 50 자재 목록 + 가격 정리</strong> — 품명, 규격, 도매가, 업체가<div class="output">산출물: 자재 가격 테이블 → 마켓플레이스 + 비용 분석기</div></div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>키트 5종 원가 계산 + 제작</strong> — 대표에게 구성품 받고, 원가/마진 세팅, 물리적 패키징<div class="output">산출물: 판매 가능한 키트 5종</div></div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong style="color:var(--green);">네이버 스마트스토어 오픈</strong> — 키트 5종 + 주요 개별 자재 등록, 바로 판매 시작<div class="output">산출물: 매출 시작 (개발 완료 안 기다림)</div></div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>샘플 재고 확보</strong> — 타일/마루/페인트 실물 샘플 + 배송 프로세스<div class="output">산출물: 카톡으로 샘플 신청 받기 가능</div></div></div>
+      </div>
+
+      <div class="task-block">
+        <div class="task-block-header"><span class="badge asst">어시</span><span style="font-size:13px;color:var(--text-dim);margin-left:8px;">— 대표/유통 옆에서 문서화</span></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>인터넷 최저가 조사</strong> — TOP 50 자재의 쿠팡/네이버 소비자가 수집<div class="output">산출물: 가격 비교 테이블 ("업체가 대비 OO% 저렴")</div></div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>체크리스트 → Q&A 변환</strong> — 기존 16개 체크리스트를 "질문-답변" 쌍으로 재구성<div class="output">산출물: 챗봇 RAG 소스 데이터</div></div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>상품 사진 촬영 + 설명 작성</strong> — 유통이 가져다주는 자재 실물<div class="output">산출물: 스마트스토어 + 마켓플레이스 상품 정보</div></div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>SEO 키워드 50개 조사</strong> — 검색량, 경쟁도, 빌드어스가 노릴 수 있는 것<div class="output">산출물: SEO 전략 키워드 리스트</div></div></div>
+      </div>
+
+      <div class="task-block">
+        <div class="task-block-header"><span class="badge dev">개발자</span><span style="font-size:13px;color:var(--text-dim);margin-left:8px;">— 기술 설계 (위 데이터 기다리면서)</span></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>기술 스택 + DB 스키마 설계</strong> — 자재 DB 구조, 이커머스 아키텍처<div class="output">산출물: 개발 시작 준비 완료</div></div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>와이어프레임</strong> — 대표와 함께 핵심 UX 플로우 확정<div class="output">산출물: 화면 설계서</div></div></div>
+      </div>
+
+      <div class="callout success">
+        <strong>STEP 1이 끝나면:</strong><br>
+        - 스마트스토어에서 <strong>키트 5종 + 개별 자재 판매 중</strong> (매출 발생)<br>
+        - 카톡으로 <strong>샘플 신청</strong> 받는 중<br>
+        - 개발자가 쓸 <strong>데이터 원재료</strong> 대부분 준비 완료<br>
+        - 개발 시작 준비 OK
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step-card" style="border-color:rgba(34,197,94,0.3);">
+    <div class="step-header">
+      <div class="step-num" style="background:linear-gradient(135deg,#16a34a,#22c55e);">2</div>
+      <div class="step-meta">
+        <h3>자사 플랫폼 개발 + 콘텐츠 시작</h3>
+        <p>개발자는 마켓플레이스를 만든다. 나머지는 유튜브 + 판매를 계속한다.</p>
+      </div>
+    </div>
+    <div class="step-body">
+
+      <div class="task-block">
+        <div class="task-block-header"><span class="badge dev">개발자</span><span style="font-size:13px;color:var(--text-dim);margin-left:8px;">— 마켓플레이스 MVP (이것만 집중)</span></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>상품 카탈로그 — STEP 1에서 정리된 자재 데이터 + 키트 등록</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>상품 상세 페이지 — <strong>대표가 쓴 가이드</strong> 상단 + 가격 비교 UI + 구매</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>장바구니 + 결제 (PG 연동) + 주문관리 + 배송 연동</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>"빌드어스 보증" 라벨 + 가격 투명성 UI (어시가 조사한 인터넷가 데이터)</div></div>
+      </div>
+
+      <div class="task-block">
+        <div class="task-block-header"><span class="badge ceo">대표</span><span style="font-size:13px;color:var(--text-dim);margin-left:8px;">— 유튜브 시작 (개발과 무관하게)</span></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong style="color:var(--green);">유튜브 촬영/업로드 시작</strong> — STEP 1에서 쓴 가이드 원고 기반</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>영상 설명란에 <strong>스마트스토어 키트 링크</strong> (자사몰 생기면 전환)</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>데이터 트랙: "서울 25평 인테리어 실제 비용" 같은 숫자 콘텐츠</div></div>
+      </div>
+
+      <div class="task-block">
+        <div class="task-block-header"><span class="badge dist">유통</span><span style="font-size:13px;color:var(--text-dim);margin-left:8px;">— 판매 계속 + 자사몰 전환 준비</span></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>스마트스토어 운영 유지 (주문 처리, 배송, CS)</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>입점사 미팅 — 중량/부피 자재 제조사 (자사몰 오픈 시 바로 입점)</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>샘플 배송 운영 + 전환 데이터 기록</div></div>
+      </div>
+
+      <div class="task-block">
+        <div class="task-block-header"><span class="badge asst">어시</span><span style="font-size:13px;color:var(--text-dim);margin-left:8px;">— SEO + CS</span></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>아파트별 비용 SEO 콘텐츠 작성 (대표가 준 데이터 기반)</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>스마트스토어 CS 대응</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>유튜브 편집 보조 or 외주 관리</div></div>
+      </div>
+
+      <div class="callout info">
+        <strong>STEP 2가 끝나면:</strong><br>
+        - <strong>빌드어스 자사 마켓플레이스 오픈</strong> (키트 + 개별 자재 구매 가능)<br>
+        - 유튜브 콘텐츠 누적 중<br>
+        - 스마트스토어 → 자사몰로 트래픽 전환 시작
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step-card" style="border-color:rgba(59,130,246,0.3);">
+    <div class="step-header">
+      <div class="step-num" style="background:linear-gradient(135deg,#2563eb,#3b82f6);">3</div>
+      <div class="step-meta">
+        <h3>유입 도구 개발</h3>
+        <p>마켓플레이스에 상품이 있으니, 이제 사람을 데려올 도구를 만든다.</p>
+      </div>
+    </div>
+    <div class="step-body">
+
+      <div class="task-block">
+        <div class="task-block-header"><span class="badge dev">개발자</span><span style="font-size:13px;color:var(--text-dim);margin-left:8px;">— 비용 분석기 + SEO 페이지</span></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>비용 분석기 MVP</strong> — 대표의 공정-자재 매핑 + 유통의 가격 데이터로 엔진 구동<br>→ "320만원 절약" 강조 + 마켓플레이스 "바로 구매" 연결</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>아파트별 비용 페이지</strong> — 대표의 추정 데이터 기반 SEO 랜딩 50개</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>업체 견적 비교기</strong> — 수동 입력, 유통의 가격 DB로 적정가 판단</div></div>
+      </div>
+
+      <div class="task-block">
+        <div class="task-block-header"><span class="badge ceo">대표</span></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>비용 분석기 <strong>자재-스타일 매핑 데이터 검증</strong> — "모던 스타일 욕실 = 이 자재들"</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>유튜브 지속 + 영상에서 비용 분석기 CTA</div></div>
+      </div>
+
+      <div class="task-block">
+        <div class="task-block-header"><span class="badge dist">유통</span></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>마켓플레이스 주문 처리 + 입점사 온보딩 (취급 자재 확대)</div></div>
+      </div>
+
+      <div class="task-block">
+        <div class="task-block-header"><span class="badge asst">어시</span></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>CS + SEO 콘텐츠 확대 + 가격 데이터 주기적 업데이트</div></div>
+      </div>
+
+      <div class="callout accent">
+        <strong>STEP 3이 끝나면 "하나의 흐름" 완성:</strong><br>
+        검색 유입 → 비용 분석 → "이만큼 절약" → 자재 목록 → 마켓플레이스 구매
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step-card" style="border-color:rgba(249,115,22,0.3);">
+    <div class="step-header">
+      <div class="step-num" style="background:linear-gradient(135deg,#ea580c,#f97316);">4</div>
+      <div class="step-meta">
+        <h3>전환 + 리텐션 강화</h3>
+        <p>오는 사람을 더 많이 사게 하고, 한번 온 사람을 붙잡는다.</p>
+      </div>
+    </div>
+    <div class="step-body">
+
+      <div class="task-block">
+        <div class="task-block-header"><span class="badge dev">개발자</span><span style="font-size:13px;color:var(--text-dim);margin-left:8px;">— 남은 기능들</span></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>AI 구매 어시스턴트</strong> — 어시가 만든 Q&A 데이터 기반 RAG + 자재 추천 → 구매 연결</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>샘플 신청 온라인화</strong> — 상품 페이지에 "샘플 신청" + 본품 리마인드</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>프로젝트 관리 도구</strong> — 대표의 공정표/체크리스트 기반</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div><strong>레벨 시스템</strong> — 커뮤니티에 사람이 모인 후</div></div>
+      </div>
+
+      <div class="task-block">
+        <div class="task-block-header"><span class="badge ceo">대표</span></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>AI 챗봇 답변 품질 검증 + 프롬프트 튜닝</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>커뮤니티 시딩 (카톡 오픈채팅) + 마스터 유저 발굴</div></div>
+      </div>
+
+      <div class="task-block">
+        <div class="task-block-header"><span class="badge dist">유통</span></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>샘플 → 본품 전환 최적화 + 키트 라인업 확장</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>재구매 유도 (다음 공정 키트 추천)</div></div>
+      </div>
+
+      <div class="task-block">
+        <div class="task-block-header"><span class="badge asst">어시</span></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>CS 패턴 → FAQ → 챗봇 데이터 보강</div></div>
+        <div class="task-item"><span class="task-check">&#9744;</span><div>커뮤니티 운영 보조</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════ 04. 의존성 ═══════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <span class="section-title">데이터 의존성</span>
+  </div>
+  <div class="section-desc">누구의 산출물이 누구에게 가는지. 이게 꼬이면 전체가 멈춘다.</div>
+
+  <div class="card">
+    <h3>대표의 산출물이 가는 곳</h3>
+    <div class="arrow-box">
+<span class="n">대표: 키트 구성 확정</span> <span class="a">&rarr;</span> <span class="n">유통: 키트 제작 + 원가</span> <span class="a">&rarr;</span> <span class="n">스마트스토어 판매</span><br>
+<span class="n">대표: 공정-자재 매핑</span> <span class="a">&rarr;</span> <span class="n">개발자: 비용 분석기 엔진</span><br>
+<span class="n">대표: 시공 가이드 원고</span> <span class="a">&rarr;</span> <span class="n">개발자: 상품 상세페이지 콘텐츠</span><br>
+<span class="n">대표: 시공 가이드 원고</span> <span class="a">&rarr;</span> <span class="n">유튜브 대본</span><br>
+<span class="n">대표: 아파트 비용 추정</span> <span class="a">&rarr;</span> <span class="n">개발자: SEO 랜딩 페이지 데이터</span>
+    </div>
+
+    <h3 style="margin-top:20px;">유통의 산출물이 가는 곳</h3>
+    <div class="arrow-box">
+<span class="n">유통: 자재 목록 + 가격</span> <span class="a">&rarr;</span> <span class="n">개발자: 마켓플레이스 상품 DB</span><br>
+<span class="n">유통: 자재 목록 + 가격</span> <span class="a">&rarr;</span> <span class="n">개발자: 비용 분석기 가격 엔진</span><br>
+<span class="n">유통: 키트 원가/마진</span> <span class="a">&rarr;</span> <span class="n">개발자: 키트 상품 등록</span><br>
+<span class="n">유통: 키트 완성품</span> <span class="a">&rarr;</span> <span class="n">스마트스토어 즉시 판매</span>
+    </div>
+
+    <h3 style="margin-top:20px;">어시의 산출물이 가는 곳</h3>
+    <div class="arrow-box">
+<span class="n">어시: 인터넷 최저가 조사</span> <span class="a">&rarr;</span> <span class="n">개발자: 가격 투명성 UI ("OO원 절약")</span><br>
+<span class="n">어시: 체크리스트 Q&A 변환</span> <span class="a">&rarr;</span> <span class="n">개발자: AI 챗봇 RAG 소스</span><br>
+<span class="n">어시: 상품 사진/설명</span> <span class="a">&rarr;</span> <span class="n">스마트스토어 + 마켓플레이스</span>
+    </div>
+
+    <div class="callout danger" style="margin-top:20px;">
+      <strong>병목 포인트:</strong><br>
+      <strong>대표</strong>가 공정-자재 매핑과 가이드 원고를 안 만들면 → 개발자가 비용 분석기/상세페이지를 못 만듦<br>
+      <strong>유통</strong>이 가격 데이터를 안 주면 → 개발자가 마켓플레이스를 못 만듦<br><br>
+      <strong>결론:</strong> STEP 1에서 대표와 유통이 데이터를 빨리 뽑는 게 전체 일정을 결정한다.
+      어시는 이 두 사람에게 <strong>붙어서 받아적고, 정리하고, 빈 곳을 조사</strong>해서 채운다.
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════ 05. 개발 순서 ═══════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <span class="section-title">개발 순서 (혼자이므로 순서가 생명)</span>
+  </div>
+  <div class="section-desc">개발자 1명. 동시에 두 개 못 만든다. 이 순서를 지킨다.</div>
+
+  <div class="card">
+    <table class="t">
+      <thead><tr><th>순서</th><th>만드는 것</th><th>필요한 데이터 (누가 주는가)</th><th>이유</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--green);font-weight:900;font-size:18px;">1</td>
+          <td style="color:var(--text-bright);font-weight:700;">마켓플레이스</td>
+          <td>
+            <span class="badge dist">유통</span> 자재 목록 + 가격<br>
+            <span class="badge ceo">대표</span> 가이드 원고<br>
+            <span class="badge asst">어시</span> 사진/설명 + 인터넷가
+          </td>
+          <td>수익 직결. 이게 없으면 나머지 전부 허공에 짓는 것</td>
+        </tr>
+        <tr>
+          <td style="color:var(--blue);font-weight:900;font-size:18px;">2</td>
+          <td style="color:var(--text-bright);font-weight:700;">비용 분석기 + 수량계산</td>
+          <td>
+            <span class="badge ceo">대표</span> 공정-자재 매핑 + 아파트 데이터<br>
+            <span class="badge dist">유통</span> 자재 가격
+          </td>
+          <td>최대 유입 도구. "바로 구매" 연결이 가능해진 상태</td>
+        </tr>
+        <tr>
+          <td style="color:var(--blue);font-weight:900;font-size:18px;">3</td>
+          <td>아파트별 비용 + 견적 비교기</td>
+          <td>
+            <span class="badge ceo">대표</span> 비용 추정 데이터
+          </td>
+          <td>SEO + TAM 확장. 정적 페이지라 빠름</td>
+        </tr>
+        <tr>
+          <td style="color:var(--orange);font-weight:900;font-size:18px;">4</td>
+          <td style="color:var(--text-bright);font-weight:700;">AI 구매 어시스턴트</td>
+          <td>
+            <span class="badge asst">어시</span> Q&A 쌍 데이터<br>
+            <span class="badge ceo">대표</span> 감수/검증
+          </td>
+          <td>전환율 부스터. 상품이 먼저 있어야 추천 가능</td>
+        </tr>
+        <tr>
+          <td style="color:var(--purple);font-weight:900;font-size:18px;">5</td>
+          <td>프로젝트 관리 + 레벨</td>
+          <td>
+            <span class="badge ceo">대표</span> 공정표 + 체크리스트
+          </td>
+          <td>리텐션. 사용자가 모인 후</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ═══════════ 06. 어시 배치 ═══════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <span class="section-title">어시스턴트 배치 전략</span>
+  </div>
+  <div class="section-desc">어시는 유일한 "범용 자원". 어디에 붙이느냐가 전체 속도를 좌우한다.</div>
+
+  <div class="card">
+    <table class="t">
+      <thead><tr><th>STEP</th><th>어시 배치</th><th>이유</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:700;">STEP 1</td>
+          <td style="color:var(--text-bright);">
+            <strong>대표 50% + 유통 50%</strong><br>
+            - 대표 옆: 가이드 받아적기, 호환성 표 정리, 아파트 비용 조사 보조<br>
+            - 유통 옆: 인터넷가 조사, 상품 사진/설명, 스마트스토어 등록 보조
+          </td>
+          <td>데이터 뽑기가 전체 일정을 결정. 두 사람의 <strong>병목을 줄이는 게</strong> 최우선</td>
+        </tr>
+        <tr>
+          <td style="font-weight:700;">STEP 2</td>
+          <td style="color:var(--text-bright);">
+            <strong>SEO 콘텐츠 60% + CS 40%</strong><br>
+            - 아파트별 비용 블로그/웹 콘텐츠 작성<br>
+            - 스마트스토어 CS 대응
+          </td>
+          <td>대표/유통은 데이터 뽑기 끝남. 어시는 <strong>콘텐츠 생산 + 운영</strong>으로 전환</td>
+        </tr>
+        <tr>
+          <td style="font-weight:700;">STEP 3</td>
+          <td style="color:var(--text-bright);">
+            <strong>CS 60% + 데이터 업데이트 40%</strong><br>
+            - 주문/배송/자재 CS 대응<br>
+            - 자재 가격 주기적 업데이트, 신규 자재 등록
+          </td>
+          <td>매출 증가 → CS 증가. 가격 데이터도 <strong>최신 유지</strong> 필요</td>
+        </tr>
+        <tr>
+          <td style="font-weight:700;">STEP 4</td>
+          <td style="color:var(--text-bright);">
+            <strong>CS 40% + 챗봇 보강 30% + 커뮤니티 30%</strong><br>
+            - FAQ → 챗봇 데이터 추가<br>
+            - 커뮤니티 스팸/분쟁 관리
+          </td>
+          <td>CS 패턴이 축적됨 → <strong>챗봇 자동화</strong>로 CS 부담 줄이기</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ═══════════ 07. 즉시 매출 ═══════════ -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <span class="section-title">개발 전 매출이 나는 구조</span>
+  </div>
+  <div class="section-desc">자사 플랫폼이 없어도 팔 수 있다. 유통 담당이 있으니까.</div>
+
+  <div class="card">
+    <table class="t">
+      <thead><tr><th>채널</th><th>판매 방법</th><th>누가 만드는가</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--green);font-weight:700;">네이버 스마트스토어</td>
+          <td>키트 5종 + 주요 개별 자재</td>
+          <td><span class="badge dist">유통</span> 셋업 + 운영 / <span class="badge asst">어시</span> 사진/설명</td>
+        </tr>
+        <tr>
+          <td style="color:var(--orange);font-weight:700;">유튜브 설명란</td>
+          <td>"이 영상에 사용된 자재" → 스마트스토어 링크</td>
+          <td><span class="badge ceo">대표</span> 콘텐츠</td>
+        </tr>
+        <tr>
+          <td style="color:var(--blue);font-weight:700;">카톡 수동 주문</td>
+          <td>샘플 신청 → 실물 확인 → 본품 주문</td>
+          <td><span class="badge dist">유통</span> 운영</td>
+        </tr>
+        <tr>
+          <td style="color:var(--purple);font-weight:700;">셀인카페</td>
+          <td>"공정별 자재 키트 만들었습니다" 소개 글</td>
+          <td><span class="badge ceo">대표</span> / <span class="badge asst">어시</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout success" style="margin-top:16px;">
+      이 구조가 가능한 이유: <strong>유통 담당이 있기 때문</strong>.<br>
+      3명 팀이었으면 대표가 키트 제작 + 배송 + 유튜브를 혼자 해야 했음 → 병목.<br>
+      유통 담당이 물류/판매를 독립 운영하니까, 대표는 <strong>데이터 정리 + 콘텐츠에만</strong> 집중.
+    </div>
+  </div>
+</div>
+
+
+<!-- FINAL -->
+<div class="final">
+  <h2>정리</h2>
+  <div class="callout accent" style="text-align:left;max-width:720px;margin:24px auto;">
+    <strong style="font-size:16px;">결국 이 사업의 속도는 "데이터를 얼마나 빨리 뽑느냐"에 달렸다.</strong><br><br>
+
+    <strong style="color:var(--orange);">대표</strong>의 머릿속 → 공정 가이드, 자재 매핑, 호환성, 비용 추정<br>
+    <strong style="color:var(--green);">유통</strong>의 머릿속 → 자재 목록, 가격, 키트 원가, 공급사<br>
+    <strong style="color:var(--purple);">어시</strong> → 위 두 사람 옆에서 받아적고, 빈 곳은 조사해서 채운다<br>
+    <strong style="color:var(--blue);">개발자</strong> → 위 데이터가 오면 제품으로 변환한다<br><br>
+
+    <strong>그리고 개발을 기다리지 않는다.</strong><br>
+    스마트스토어에서 키트 먼저 팔고, 유튜브 먼저 시작하고, 샘플 먼저 보낸다.<br>
+    자사 플랫폼은 <strong>이미 굴러가는 사업을 더 효율적으로 만드는 도구</strong>일 뿐이다.
+  </div>
+
+  <p style="font-size:13px;color:var(--text-dim);margin-top:24px;">
+    빌드어스 실행 계획 v2 &middot; 2026-03-29
+  </p>
+</div>
+
+</div>
+</body>
+</html>

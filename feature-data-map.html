@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>빌드어스 — 개발 품목 × 필요 데이터</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg:#0a0a0f; --card:#12121a; --card-border:#1e1e2e;
+    --text:#e4e4e7; --text-dim:#71717a; --text-bright:#fafafa;
+    --accent:#6366f1; --accent-glow:rgba(99,102,241,0.15);
+    --green:#22c55e; --green-dim:rgba(34,197,94,0.12);
+    --yellow:#eab308; --yellow-dim:rgba(234,179,8,0.12);
+    --red:#ef4444; --red-dim:rgba(239,68,68,0.12);
+    --orange:#f97316; --orange-dim:rgba(249,115,22,0.12);
+    --blue:#3b82f6; --blue-dim:rgba(59,130,246,0.12);
+    --purple:#a855f7; --purple-dim:rgba(168,85,247,0.12);
+    --cyan:#06b6d4; --cyan-dim:rgba(6,182,212,0.12);
+  }
+  body { font-family:'Noto Sans KR',-apple-system,sans-serif; background:var(--bg); color:var(--text); line-height:1.7; -webkit-font-smoothing:antialiased; }
+  .container { max-width:1040px; margin:0 auto; padding:60px 24px 120px; }
+
+  .hero { text-align:center; padding:60px 0 40px; }
+  .hero-label { font-size:12px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:16px; }
+  .hero h1 { font-size:38px; font-weight:900; color:var(--text-bright); line-height:1.2; margin-bottom:12px; }
+  .hero .sub { font-size:14px; color:var(--text-dim); font-weight:300; }
+
+  .badge { display:inline-block; padding:3px 10px; border-radius:6px; font-size:11px; font-weight:700; }
+  .badge.ceo { background:var(--orange-dim); color:var(--orange); }
+  .badge.dev { background:var(--blue-dim); color:var(--blue); }
+  .badge.dist { background:var(--green-dim); color:var(--green); }
+  .badge.asst { background:var(--purple-dim); color:var(--purple); }
+  .badge.design { background:var(--accent-glow); color:var(--accent); }
+
+  .feature { background:var(--card); border:1px solid var(--card-border); border-radius:16px; margin-bottom:20px; overflow:hidden; }
+  .feature-header { display:flex; align-items:center; gap:14px; padding:22px 28px; border-bottom:1px solid var(--card-border); }
+  .feature-num { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900; color:#fff; flex-shrink:0; }
+  .feature-meta { flex:1; }
+  .feature-meta h3 { font-size:17px; font-weight:700; color:var(--text-bright); margin:0; }
+  .feature-meta p { font-size:12px; color:var(--text-dim); margin:2px 0 0; }
+  .feature-body { padding:20px 28px; }
+
+  .data-row { display:grid; grid-template-columns:240px 1fr 120px; gap:12px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:13px; align-items:start; }
+  .data-row:last-child { border-bottom:none; }
+  .data-name { color:var(--text-bright); font-weight:600; }
+  .data-detail { color:var(--text-dim); }
+  .data-who { text-align:right; }
+
+  .data-header { display:grid; grid-template-columns:240px 1fr 120px; gap:12px; padding:8px 0 10px; border-bottom:1px solid var(--card-border); margin-bottom:4px; }
+  .data-header span { font-size:11px; font-weight:600; color:var(--text-dim); letter-spacing:0.5px; text-transform:uppercase; }
+  .data-header span:last-child { text-align:right; }
+
+  .callout { padding:14px 18px; border-radius:10px; font-size:13px; line-height:1.7; margin:16px 0 0; }
+  .callout.accent { background:var(--accent-glow); border-left:3px solid var(--accent); }
+  .callout.warn { background:var(--yellow-dim); border-left:3px solid var(--yellow); }
+
+  .section-divider { margin:48px 0 24px; padding:12px 0; border-bottom:1px solid var(--card-border); }
+  .section-divider h2 { font-size:20px; font-weight:700; color:var(--text-bright); }
+  .section-divider p { font-size:13px; color:var(--text-dim); }
+
+  .summary { background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:28px 32px; margin-top:48px; }
+  .summary h3 { font-size:18px; font-weight:700; color:var(--text-bright); margin-bottom:16px; }
+  .summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .summary-box { background:rgba(255,255,255,0.02); border:1px solid var(--card-border); border-radius:10px; padding:16px 20px; }
+  .summary-box h4 { font-size:13px; font-weight:700; margin-bottom:8px; }
+  .summary-box ul { padding-left:16px; margin:0; }
+  .summary-box li { font-size:12px; color:var(--text-dim); margin-bottom:3px; }
+
+  @media (max-width:768px) {
+    .data-row { grid-template-columns:1fr; gap:4px; }
+    .data-header { display:none; }
+    .data-who { text-align:left; }
+    .summary-grid { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+  <div class="hero-label">Feature &times; Data Map</div>
+  <h1>개발 품목별 필요 데이터</h1>
+  <div class="sub">각 기능을 만들려면 어떤 데이터가 있어야 하는가 &middot; 2026-03-29</div>
+</div>
+
+
+<!-- ──────── 플랫폼 핵심 ──────── -->
+<div class="section-divider">
+  <h2>플랫폼 — 핵심</h2>
+  <p>매출이 직접 발생하는 기능</p>
+</div>
+
+<!-- 1. 마켓플레이스 -->
+<div class="feature">
+  <div class="feature-header">
+    <div class="feature-num" style="background:linear-gradient(135deg,#16a34a,#22c55e);">1</div>
+    <div class="feature-meta">
+      <h3>자재 마켓플레이스</h3>
+      <p>"전문가가 골라준 자재를, 전문가 가격에"</p>
+    </div>
+  </div>
+  <div class="feature-body">
+    <div class="data-header">
+      <span>필요 데이터</span>
+      <span>구체적 내용</span>
+      <span>누가 만드나</span>
+    </div>
+    <div class="data-row">
+      <div class="data-name">자재 카탈로그</div>
+      <div class="data-detail">품명, 규격, 브랜드, 제조사, 카테고리 (공정별 분류)</div>
+      <div class="data-who"><span class="badge dist">유통</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">가격 정보</div>
+      <div class="data-detail">도매가, 업체가 (판매가), 소비자 판매가</div>
+      <div class="data-who"><span class="badge dist">유통</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">인터넷 최저가</div>
+      <div class="data-detail">쿠팡/네이버 기준 소비자가 — "OO원 절약" 표시용</div>
+      <div class="data-who"><span class="badge asst">어시</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">상품 사진</div>
+      <div class="data-detail">실물 사진 (정면, 시공 적용 모습)</div>
+      <div class="data-who"><span class="badge asst">어시</span> <span class="badge dist">유통</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">상품 설명</div>
+      <div class="data-detail">용도, 특징, 시공 시 주의사항, 추천 공정</div>
+      <div class="data-who"><span class="badge asst">어시</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">시공 가이드 (상세페이지용)</div>
+      <div class="data-detail">이 자재가 들어가는 공정의 시공 순서/주의사항 — 상세페이지 상단</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">자재 호환성</div>
+      <div class="data-detail">"이 자재와 함께 쓸 수 있는 / 없는 자재" 표시용</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">"빌드어스 보증" 여부</div>
+      <div class="data-detail">대표가 현장에서 직접 써보고 품질 확인한 자재 Y/N</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">공급사 정보</div>
+      <div class="data-detail">입점 업체, 리드타임, 최소 주문, 반품 조건</div>
+      <div class="data-who"><span class="badge dist">유통</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">배송 정보</div>
+      <div class="data-detail">무게, 부피, 배송 방법 (택배/화물), 예상 배송일</div>
+      <div class="data-who"><span class="badge dist">유통</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. 비용 분석기 -->
+<div class="feature">
+  <div class="feature-header">
+    <div class="feature-num" style="background:linear-gradient(135deg,#2563eb,#3b82f6);">2</div>
+    <div class="feature-meta">
+      <h3>비용 분석기</h3>
+      <p>"업체 의뢰 600만원 → 빌드어스 280만원 (320만원 절약)"</p>
+    </div>
+  </div>
+  <div class="feature-body">
+    <div class="data-header">
+      <span>필요 데이터</span>
+      <span>구체적 내용</span>
+      <span>누가 만드나</span>
+    </div>
+    <div class="data-row">
+      <div class="data-name">공정-자재 매핑</div>
+      <div class="data-detail">16개 공정별 필요 자재 목록 ("방수 = 방수액 + 부직포 + 롤러 + ...")</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">자재별 단위 소요량</div>
+      <div class="data-detail">1㎡당 필요 수량 (타일 몇 장, 방수액 몇 리터, 페인트 몇 kg)</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">자재 가격</div>
+      <div class="data-detail">카탈로그 자재의 판매 단가</div>
+      <div class="data-who"><span class="badge dist">유통</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">공간 유형별 표준 면적</div>
+      <div class="data-detail">평형대별 욕실/주방/거실/방 평균 면적</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">스타일별 자재 변형</div>
+      <div class="data-detail">"모던 욕실 = 이 타일 + 이 수전" / "클래식 = 이 타일 + 이 수전"</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">등급별 자재 변형</div>
+      <div class="data-detail">같은 공정이라도 경제형 / 표준 / 프리미엄 자재 세트가 다름</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">업체 시공비 기준</div>
+      <div class="data-detail">공정별 기능공 인건비 + 업체 마진 기준 — "업체에 맡기면 OO원" 비교용</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. 수량 자동 계산기 -->
+<div class="feature">
+  <div class="feature-header">
+    <div class="feature-num" style="background:linear-gradient(135deg,#2563eb,#3b82f6);">3</div>
+    <div class="feature-meta">
+      <h3>수량 자동 계산기</h3>
+      <p>"5㎡ 욕실 타일 = 600×600 15장 + 여분 2장"</p>
+    </div>
+  </div>
+  <div class="feature-body">
+    <div class="data-header">
+      <span>필요 데이터</span>
+      <span>구체적 내용</span>
+      <span>누가 만드나</span>
+    </div>
+    <div class="data-row">
+      <div class="data-name">자재별 단위 소요량</div>
+      <div class="data-detail">1㎡당 필요 수량 (비용 분석기와 공유)</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">자재별 규격</div>
+      <div class="data-detail">타일 600×600, 300×600 등 규격별 계산 로직</div>
+      <div class="data-who"><span class="badge dist">유통</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">로스율</div>
+      <div class="data-detail">공정/자재별 여분 비율 (타일 10~15%, 페인트 5% 등)</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">판매 단위</div>
+      <div class="data-detail">박스 단위(타일 8장/box), 캔 단위(페인트 4L) 등 → 올림 계산</div>
+      <div class="data-who"><span class="badge dist">유통</span></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ──────── 유입 도구 ──────── -->
+<div class="section-divider">
+  <h2>플랫폼 — 유입 도구</h2>
+  <p>사람을 데려오는 기능</p>
+</div>
+
+<!-- 4. 아파트별 비용 -->
+<div class="feature">
+  <div class="feature-header">
+    <div class="feature-num" style="background:linear-gradient(135deg,#0d9488,#14b8a6);">4</div>
+    <div class="feature-meta">
+      <h3>아파트별 인테리어 비용 데이터</h3>
+      <p>"래미안 25평 인테리어 얼마?" → SEO 유입 핵심</p>
+    </div>
+  </div>
+  <div class="feature-body">
+    <div class="data-header">
+      <span>필요 데이터</span>
+      <span>구체적 내용</span>
+      <span>누가 만드나</span>
+    </div>
+    <div class="data-row">
+      <div class="data-name">아파트 단지 정보</div>
+      <div class="data-detail">단지명, 위치, 평형대, 세대수</div>
+      <div class="data-who"><span class="badge asst">어시</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">공간별 면적 추정</div>
+      <div class="data-detail">평형대별 욕실/주방/거실/방 면적 (실측 or 도면 기반 추정)</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">공정별 예상 비용</div>
+      <div class="data-detail">셀프 자재비 / 반셀프 비용 / 업체 의뢰 비용 (3단계)</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">SEO 콘텐츠</div>
+      <div class="data-detail">위 데이터 기반으로 작성한 블로그/랜딩 텍스트</div>
+      <div class="data-who"><span class="badge asst">어시</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. 견적 비교기 -->
+<div class="feature">
+  <div class="feature-header">
+    <div class="feature-num" style="background:linear-gradient(135deg,#0d9488,#14b8a6);">5</div>
+    <div class="feature-meta">
+      <h3>업체 견적 비교기</h3>
+      <p>"받은 견적이 적정한가?" → 검색 유입 + 신뢰 구축</p>
+    </div>
+  </div>
+  <div class="feature-body">
+    <div class="data-header">
+      <span>필요 데이터</span>
+      <span>구체적 내용</span>
+      <span>누가 만드나</span>
+    </div>
+    <div class="data-row">
+      <div class="data-name">공정별 적정 단가 범위</div>
+      <div class="data-detail">"욕실 방수 = ㎡당 3~5만원이 적정" (자재비+인건비)</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">공정별 인건비 기준</div>
+      <div class="data-detail">기능공 일당, 공정별 소요 공수 (인·일)</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">자재 시장가</div>
+      <div class="data-detail">견적서 자재 항목과 비교할 실제 가격 기준</div>
+      <div class="data-who"><span class="badge dist">유통</span></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ──────── 전환 도구 ──────── -->
+<div class="section-divider">
+  <h2>플랫폼 — 전환 강화</h2>
+  <p>"보는 사람"을 "사는 사람"으로</p>
+</div>
+
+<!-- 6. AI 구매 어시스턴트 -->
+<div class="feature">
+  <div class="feature-header">
+    <div class="feature-num" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">6</div>
+    <div class="feature-meta">
+      <h3>AI 구매 어시스턴트</h3>
+      <p>"뭘 사야 할지 모르겠으면 물어보세요" → 자재 추천 → 바로 구매</p>
+    </div>
+  </div>
+  <div class="feature-body">
+    <div class="data-header">
+      <span>필요 데이터</span>
+      <span>구체적 내용</span>
+      <span>누가 만드나</span>
+    </div>
+    <div class="data-row">
+      <div class="data-name">체크리스트 Q&A 변환</div>
+      <div class="data-detail">16개 공정 체크리스트를 "질문-답변" 쌍으로 재구성</div>
+      <div class="data-who"><span class="badge asst">어시</span> <span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">시공 가이드 텍스트</div>
+      <div class="data-detail">RAG 지식 소스 — 마켓플레이스 가이드와 동일 데이터</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">자재-공정 매핑</div>
+      <div class="data-detail">"이 상황이면 이 자재" 추천 로직 — 비용 분석기와 공유</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">자재 호환성</div>
+      <div class="data-detail">"이건 같이 쓰면 안 됩니다" 경고 로직</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">자재 카탈로그</div>
+      <div class="data-detail">추천할 상품 DB — 마켓플레이스와 동일</div>
+      <div class="data-who"><span class="badge dist">유통</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">FAQ 데이터</div>
+      <div class="data-detail">CS에서 축적된 자주 묻는 질문/답변 (운영 후 생김)</div>
+      <div class="data-who"><span class="badge asst">어시</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 7. 호환성 체커 -->
+<div class="feature">
+  <div class="feature-header">
+    <div class="feature-num" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">7</div>
+    <div class="feature-meta">
+      <h3>자재 호환성 체커</h3>
+      <p>"이 본드 위에 이 타일 괜찮을까?" → 실패 방지 = 구매 확신</p>
+    </div>
+  </div>
+  <div class="feature-body">
+    <div class="data-header">
+      <span>필요 데이터</span>
+      <span>구체적 내용</span>
+      <span>누가 만드나</span>
+    </div>
+    <div class="data-row">
+      <div class="data-name">자재 간 호환성 매트릭스</div>
+      <div class="data-detail">자재 A × 자재 B = OK / NG / 조건부 OK</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">비호환 사유</div>
+      <div class="data-detail">"이 방수재는 유성이라 수성 본드와 반응함" 등 설명</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">대체 자재 추천</div>
+      <div class="data-detail">NG일 때 "대신 이걸 쓰세요" 추천</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 8. 샘플 배송 -->
+<div class="feature">
+  <div class="feature-header">
+    <div class="feature-num" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">8</div>
+    <div class="feature-meta">
+      <h3>자재 샘플 배송</h3>
+      <p>"실물 보고 결정하세요" → 샘플→본품 전환율 25~35%</p>
+    </div>
+  </div>
+  <div class="feature-body">
+    <div class="data-header">
+      <span>필요 데이터</span>
+      <span>구체적 내용</span>
+      <span>누가 만드나</span>
+    </div>
+    <div class="data-row">
+      <div class="data-name">샘플 가능 자재 목록</div>
+      <div class="data-detail">타일, 마루, 페인트 등 실물 확인이 의미 있는 자재</div>
+      <div class="data-who"><span class="badge dist">유통</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">샘플 규격/비용</div>
+      <div class="data-detail">샘플 크기, 무료/유료 기준, 배송비</div>
+      <div class="data-who"><span class="badge dist">유통</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">샘플 재고</div>
+      <div class="data-detail">현재 보유 샘플 수량, 보충 주기</div>
+      <div class="data-who"><span class="badge dist">유통</span></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ──────── 리텐션 ──────── -->
+<div class="section-divider">
+  <h2>플랫폼 — 리텐션</h2>
+  <p>한번 온 사람을 붙잡는 기능</p>
+</div>
+
+<!-- 9. 프로젝트 관리 -->
+<div class="feature">
+  <div class="feature-header">
+    <div class="feature-num" style="background:linear-gradient(135deg,#ca8a04,#eab308);">9</div>
+    <div class="feature-meta">
+      <h3>프로젝트 관리 도구</h3>
+      <p>"지금 뭘 해야 하지?" → 체크리스트 + 공정 알림 + 시공 기록</p>
+    </div>
+  </div>
+  <div class="feature-body">
+    <div class="data-header">
+      <span>필요 데이터</span>
+      <span>구체적 내용</span>
+      <span>누가 만드나</span>
+    </div>
+    <div class="data-row">
+      <div class="data-name">표준 공정 순서</div>
+      <div class="data-detail">16개 공정의 선후행 관계 (방수→타일→줄눈 등)</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">공정별 예상 소요일</div>
+      <div class="data-detail">시공일 + 양생/건조 시간 포함</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">공정별 체크리스트</div>
+      <div class="data-detail">기존 16개 체크리스트 (이미 정리됨)</div>
+      <div class="data-who"><span class="badge ceo">대표</span> <span style="font-size:11px;color:var(--text-dim);">보유</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">공정 태그 분류 체계</div>
+      <div class="data-detail">사진 기록 시 공정 자동/수동 태깅용</div>
+      <div class="data-who"><span class="badge design">설계</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 10. 레벨 시스템 -->
+<div class="feature">
+  <div class="feature-header">
+    <div class="feature-num" style="background:linear-gradient(135deg,#ca8a04,#eab308);">10</div>
+    <div class="feature-meta">
+      <h3>레벨 시스템</h3>
+      <p>"셀프 인테리어 레벨 3" → 커뮤니티 자체 운영 기반</p>
+    </div>
+  </div>
+  <div class="feature-body">
+    <div class="data-header">
+      <span>필요 데이터</span>
+      <span>구체적 내용</span>
+      <span>누가 만드나</span>
+    </div>
+    <div class="data-row">
+      <div class="data-name">레벨 기준</div>
+      <div class="data-detail">경험치 부여 기준 (구매, 시공 기록, Q&A 답변, UGC 등)</div>
+      <div class="data-who"><span class="badge design">설계</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">레벨별 혜택</div>
+      <div class="data-detail">할인율, 뱃지, 우선 샘플, 커뮤니티 권한 등</div>
+      <div class="data-who"><span class="badge design">설계</span></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ──────── 콘텐츠 ──────── -->
+<div class="section-divider">
+  <h2>콘텐츠</h2>
+  <p>플랫폼 밖에서 사람을 데려오는 것</p>
+</div>
+
+<!-- 11. 유튜브 -->
+<div class="feature">
+  <div class="feature-header">
+    <div class="feature-num" style="background:linear-gradient(135deg,#ea580c,#f97316);">11</div>
+    <div class="feature-meta">
+      <h3>유튜브 (가이드 + 데이터 2트랙)</h3>
+      <p>"셀프 방수 A to Z" + "서울 25평 인테리어 실제 비용"</p>
+    </div>
+  </div>
+  <div class="feature-body">
+    <div class="data-header">
+      <span>필요 데이터</span>
+      <span>구체적 내용</span>
+      <span>누가 만드나</span>
+    </div>
+    <div class="data-row">
+      <div class="data-name">시공 가이드 (대본)</div>
+      <div class="data-detail">공정별 시공 가이드 = 마켓플레이스 가이드와 동일 원본</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">비용 데이터</div>
+      <div class="data-detail">아파트별/공정별 실제 비용 — 비용 분석기 데이터와 동일</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">자재 가격 동향</div>
+      <div class="data-detail">"2026년 타일 가격 얼마나 올랐나" — 유통 데이터 기반</div>
+      <div class="data-who"><span class="badge dist">유통</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 12. SEO -->
+<div class="feature">
+  <div class="feature-header">
+    <div class="feature-num" style="background:linear-gradient(135deg,#ea580c,#f97316);">12</div>
+    <div class="feature-meta">
+      <h3>SEO 콘텐츠 (블로그/웹)</h3>
+      <p>"래미안 25평 인테리어 비용" 검색 → 빌드어스 도착</p>
+    </div>
+  </div>
+  <div class="feature-body">
+    <div class="data-header">
+      <span>필요 데이터</span>
+      <span>구체적 내용</span>
+      <span>누가 만드나</span>
+    </div>
+    <div class="data-row">
+      <div class="data-name">아파트별 비용 추정</div>
+      <div class="data-detail">아파트별 비용 데이터 페이지와 동일</div>
+      <div class="data-who"><span class="badge ceo">대표</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">SEO 키워드 리스트</div>
+      <div class="data-detail">검색량, 경쟁도, 노릴 수 있는 키워드</div>
+      <div class="data-who"><span class="badge asst">어시</span></div>
+    </div>
+    <div class="data-row">
+      <div class="data-name">콘텐츠 원고</div>
+      <div class="data-detail">키워드 기반 SEO 글 (대표 데이터 + 어시 작성)</div>
+      <div class="data-who"><span class="badge asst">어시</span></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════ 요약 ════════ -->
+<div class="summary">
+  <h3>데이터 담당 요약 — 누가 뭘 만들어야 하는가</h3>
+  <div class="summary-grid">
+
+    <div class="summary-box" style="border-color:rgba(249,115,22,0.3);">
+      <h4 style="color:var(--orange);"><span class="badge ceo">대표</span> 가 만들어야 하는 데이터</h4>
+      <ul>
+        <li><strong>공정별 시공 가이드</strong> (시공 순서, 주의사항, 실패 포인트)</li>
+        <li><strong>공정-자재 매핑</strong> ("방수 = 방수액 + 부직포 + ...")</li>
+        <li><strong>자재별 단위 소요량</strong> (1㎡당 몇 개/리터)</li>
+        <li><strong>자재 호환성 매트릭스</strong> (OK/NG + 사유 + 대체 추천)</li>
+        <li><strong>스타일/등급별 자재 변형</strong> (모던/클래식 × 경제/표준/프리미엄)</li>
+        <li><strong>공간 유형별 표준 면적</strong> (평형대별)</li>
+        <li><strong>아파트별 비용 추정</strong> (셀프/반셀프/업체 3단계)</li>
+        <li><strong>공정별 적정 단가</strong> + 인건비 기준</li>
+        <li><strong>표준 공정 순서</strong> + 소요일 + 양생 시간</li>
+        <li><strong>"빌드어스 보증" 자재 지정</strong></li>
+        <li><strong>로스율</strong> (공정/자재별 여분 비율)</li>
+      </ul>
+    </div>
+
+    <div class="summary-box" style="border-color:rgba(34,197,94,0.3);">
+      <h4 style="color:var(--green);"><span class="badge dist">유통</span> 이 만들어야 하는 데이터</h4>
+      <ul>
+        <li><strong>자재 카탈로그</strong> (품명, 규격, 브랜드, 제조사, 카테고리)</li>
+        <li><strong>가격 정보</strong> (도매가, 업체가, 소비자 판매가)</li>
+        <li><strong>공급사 정보</strong> (입점 업체, 리드타임, 최소 주문, 반품)</li>
+        <li><strong>배송 정보</strong> (무게, 부피, 배송 방법, 예상일)</li>
+        <li><strong>자재별 규격</strong> (600×600, 300×600 등)</li>
+        <li><strong>판매 단위</strong> (박스 장수, 캔 용량 등)</li>
+        <li><strong>샘플 목록/규격/비용/재고</strong></li>
+        <li><strong>자재 가격 동향</strong> (주기적 업데이트)</li>
+      </ul>
+    </div>
+
+    <div class="summary-box" style="border-color:rgba(168,85,247,0.3);">
+      <h4 style="color:var(--purple);"><span class="badge asst">어시</span> 가 만들어야 하는 데이터</h4>
+      <ul>
+        <li><strong>인터넷 최저가 조사</strong> (쿠팡/네이버 소비자가)</li>
+        <li><strong>상품 사진 촬영</strong></li>
+        <li><strong>상품 설명 작성</strong></li>
+        <li><strong>체크리스트 → Q&A 변환</strong> (대표 감수)</li>
+        <li><strong>SEO 키워드 조사</strong></li>
+        <li><strong>SEO 콘텐츠 원고 작성</strong></li>
+        <li><strong>아파트 단지 기본 정보 조사</strong></li>
+        <li><strong>FAQ 데이터 축적</strong> (CS에서 수집)</li>
+      </ul>
+    </div>
+
+    <div class="summary-box" style="border-color:rgba(99,102,241,0.3);">
+      <h4 style="color:var(--accent);"><span class="badge design">설계</span> 로 결정할 것</h4>
+      <ul>
+        <li><strong>레벨 기준 + 혜택 구조</strong></li>
+        <li><strong>공정 태그 분류 체계</strong></li>
+        <li style="color:var(--text-dim);margin-top:4px;">→ 현장 데이터 불필요, 기획으로 결정</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout accent" style="margin-top:20px;">
+    <strong>데이터 재사용 관계:</strong><br>
+    대표의 <strong>"시공 가이드"</strong> → 마켓플레이스(1) + 챗봇(6) + 유튜브(11) 에서 동시 사용<br>
+    대표의 <strong>"공정-자재 매핑"</strong> → 비용 분석기(2) + 수량 계산기(3) + 챗봇(6) 에서 동시 사용<br>
+    대표의 <strong>"호환성"</strong> → 마켓플레이스(1) + 호환성 체커(7) + 챗봇(6) 에서 동시 사용<br>
+    유통의 <strong>"카탈로그+가격"</strong> → 마켓플레이스(1) + 비용 분석기(2) + 견적 비교(5) + 챗봇(6) 에서 동시 사용
+  </div>
+</div>
+
+<div style="text-align:center;margin-top:48px;">
+  <p style="font-size:13px;color:var(--text-dim);">
+    빌드어스 개발 품목 × 필요 데이터 맵 &middot; 2026-03-29
+  </p>
+</div>
+
+</div>
+</body>
+</html>

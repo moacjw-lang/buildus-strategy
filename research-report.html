@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>빌드어스 딥 리서치 리포트 — 아이디어 강화 & 피드백</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0a0a0f; --card: #12121a; --card-border: #1e1e2e;
+    --text: #e4e4e7; --text-dim: #71717a; --text-bright: #fafafa;
+    --accent: #6366f1; --accent-glow: rgba(99,102,241,0.15);
+    --green: #22c55e; --green-dim: rgba(34,197,94,0.12);
+    --yellow: #eab308; --yellow-dim: rgba(234,179,8,0.12);
+    --red: #ef4444; --red-dim: rgba(239,68,68,0.12);
+    --orange: #f97316; --orange-dim: rgba(249,115,22,0.12);
+    --blue: #3b82f6; --blue-dim: rgba(59,130,246,0.12);
+    --purple: #a855f7; --purple-dim: rgba(168,85,247,0.12);
+    --cyan: #06b6d4; --cyan-dim: rgba(6,182,212,0.12);
+    --pink: #ec4899; --pink-dim: rgba(236,72,153,0.12);
+  }
+  body { font-family:'Noto Sans KR',-apple-system,sans-serif; background:var(--bg); color:var(--text); line-height:1.7; -webkit-font-smoothing:antialiased; }
+  .container { max-width:960px; margin:0 auto; padding:60px 24px 120px; }
+
+  /* Hero */
+  .hero { text-align:center; padding:80px 0 40px; }
+  .hero-label { font-size:12px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:16px; }
+  .hero h1 { font-size:38px; font-weight:900; color:var(--text-bright); line-height:1.25; margin-bottom:12px; }
+  .hero .sub { font-size:15px; color:var(--text-dim); font-weight:300; }
+  .hero .badge { display:inline-block; margin-top:16px; padding:6px 16px; background:var(--cyan-dim); border:1px solid rgba(6,182,212,0.3); border-radius:20px; font-size:12px; color:var(--cyan); font-weight:600; }
+
+  /* TOC */
+  .toc { background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:32px; margin:40px 0; }
+  .toc h2 { font-size:18px; color:var(--text-bright); margin-bottom:16px; }
+  .toc-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 24px; }
+  .toc a { color:var(--accent); text-decoration:none; font-size:14px; padding:4px 0; display:block; transition:color .2s; }
+  .toc a:hover { color:var(--text-bright); }
+  .toc a .num { color:var(--text-dim); margin-right:8px; font-weight:600; }
+
+  /* Section */
+  .section { margin:60px 0 0; }
+  .section-header { display:flex; align-items:center; gap:12px; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--card-border); }
+  .section-num { background:var(--accent); color:#fff; font-size:13px; font-weight:700; width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .section-title { font-size:24px; font-weight:700; color:var(--text-bright); }
+
+  /* Cards */
+  .card { background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:28px; margin:20px 0; }
+  .card h3 { font-size:18px; font-weight:700; color:var(--text-bright); margin-bottom:12px; }
+  .card h4 { font-size:15px; font-weight:600; color:var(--cyan); margin:16px 0 8px; }
+  .card p { font-size:14px; margin-bottom:10px; }
+
+  /* Insight Box */
+  .insight { background:var(--accent-glow); border-left:3px solid var(--accent); border-radius:0 10px 10px 0; padding:20px 24px; margin:20px 0; }
+  .insight .label { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:8px; }
+  .insight p { font-size:14px; color:var(--text); }
+
+  /* Warning Box */
+  .warning { background:var(--red-dim); border-left:3px solid var(--red); border-radius:0 10px 10px 0; padding:20px 24px; margin:20px 0; }
+  .warning .label { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--red); margin-bottom:8px; }
+
+  /* Success Box */
+  .success { background:var(--green-dim); border-left:3px solid var(--green); border-radius:0 10px 10px 0; padding:20px 24px; margin:20px 0; }
+  .success .label { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--green); margin-bottom:8px; }
+
+  /* Tables */
+  table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13px; }
+  th { background:rgba(99,102,241,0.08); color:var(--accent); text-align:left; padding:10px 14px; font-weight:600; border-bottom:1px solid var(--card-border); }
+  td { padding:10px 14px; border-bottom:1px solid rgba(30,30,46,0.5); vertical-align:top; }
+  tr:hover td { background:rgba(255,255,255,0.02); }
+
+  /* Grade Badges */
+  .grade { display:inline-block; padding:3px 10px; border-radius:6px; font-size:12px; font-weight:700; }
+  .grade-s { background:var(--green-dim); color:var(--green); border:1px solid rgba(34,197,94,0.3); }
+  .grade-a { background:var(--blue-dim); color:var(--blue); border:1px solid rgba(59,130,246,0.3); }
+  .grade-b { background:var(--yellow-dim); color:var(--yellow); border:1px solid rgba(234,179,8,0.3); }
+  .grade-c { background:var(--orange-dim); color:var(--orange); border:1px solid rgba(249,115,22,0.3); }
+  .grade-x { background:var(--red-dim); color:var(--red); border:1px solid rgba(239,68,68,0.3); }
+
+  /* Phase Tag */
+  .phase { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; }
+  .phase-1 { background:var(--green-dim); color:var(--green); }
+  .phase-2 { background:var(--blue-dim); color:var(--blue); }
+  .phase-3 { background:var(--purple-dim); color:var(--purple); }
+  .phase-x { background:var(--red-dim); color:var(--red); }
+
+  /* Flow */
+  .flow { background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:28px; margin:20px 0; }
+  .flow-step { display:flex; gap:16px; margin:12px 0; align-items:flex-start; }
+  .flow-icon { background:var(--accent); color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; margin-top:2px; }
+  .flow-content { flex:1; }
+  .flow-content .title { font-size:14px; font-weight:600; color:var(--text-bright); }
+  .flow-content .desc { font-size:13px; color:var(--text-dim); }
+  .flow-arrow { text-align:center; color:var(--accent); font-size:18px; margin:4px 0; }
+
+  /* Verdict */
+  .verdict { background:linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.1)); border:1px solid rgba(99,102,241,0.3); border-radius:16px; padding:36px; margin:40px 0; text-align:center; }
+  .verdict h2 { font-size:28px; font-weight:900; color:var(--text-bright); margin-bottom:12px; }
+  .verdict .big-grade { font-size:64px; font-weight:900; background:linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+  /* Comparison Grid */
+  .compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0; }
+  .compare-card { background:var(--card); border:1px solid var(--card-border); border-radius:12px; padding:20px; }
+  .compare-card.add { border-color:rgba(34,197,94,0.3); }
+  .compare-card.remove { border-color:rgba(239,68,68,0.3); }
+  .compare-card.modify { border-color:rgba(234,179,8,0.3); }
+  .compare-card .tag { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; margin-bottom:8px; }
+  .compare-card.add .tag { color:var(--green); }
+  .compare-card.remove .tag { color:var(--red); }
+  .compare-card.modify .tag { color:var(--yellow); }
+  .compare-card h4 { font-size:15px; font-weight:600; color:var(--text-bright); margin-bottom:6px; }
+  .compare-card p { font-size:13px; color:var(--text-dim); }
+
+  /* Stats */
+  .stats-row { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin:20px 0; }
+  .stat-card { background:var(--card); border:1px solid var(--card-border); border-radius:12px; padding:20px; text-align:center; }
+  .stat-num { font-size:28px; font-weight:900; color:var(--accent); }
+  .stat-label { font-size:12px; color:var(--text-dim); margin-top:4px; }
+
+  /* Responsive */
+  @media (max-width:768px) {
+    .hero h1 { font-size:28px; }
+    .toc-grid { grid-template-columns:1fr; }
+    .compare-grid { grid-template-columns:1fr; }
+    .stats-row { grid-template-columns:1fr 1fr; }
+  }
+
+  /* Quotes */
+  .quote { position:relative; padding:24px 28px 24px 48px; margin:20px 0; background:var(--card); border-radius:12px; border-left:3px solid var(--purple); font-style:italic; font-size:15px; color:var(--text); }
+  .quote::before { content:'"'; position:absolute; left:16px; top:12px; font-size:36px; color:var(--purple); font-style:normal; }
+
+  /* Platform cards */
+  .platform-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin:16px 0; }
+  .platform-card { background:var(--card); border:1px solid var(--card-border); border-radius:10px; padding:16px; text-align:center; }
+  .platform-card .name { font-size:14px; font-weight:700; color:var(--text-bright); }
+  .platform-card .revenue { font-size:18px; font-weight:900; color:var(--accent); margin:4px 0; }
+  .platform-card .model { font-size:11px; color:var(--text-dim); }
+  .platform-card .result { display:inline-block; margin-top:8px; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; }
+  .platform-card .result.pass { background:var(--green-dim); color:var(--green); }
+  .platform-card .result.fail { background:var(--red-dim); color:var(--red); }
+  .platform-card .result.partial { background:var(--yellow-dim); color:var(--yellow); }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-label">DEEP RESEARCH REPORT</div>
+  <h1>빌드어스 아이디어 강화 리포트</h1>
+  <div class="sub">해외 플랫폼 분석 + 콘텐츠-커머스 모델 검증 + 신규 아이디어 제안</div>
+  <div class="badge">2026-03-28 | 리서치 4개 스트림 통합</div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <h2>목차</h2>
+  <div class="toc-grid">
+    <a href="#s1"><span class="num">01</span> 해외 벤치마크: 작동하는 모델들</a>
+    <a href="#s2"><span class="num">02</span> 콘텐츠→커머스 전환율 검증</a>
+    <a href="#s3"><span class="num">03</span> 한국 시장 공백 확인</a>
+    <a href="#s4"><span class="num">04</span> 추가할 아이디어 7개</a>
+    <a href="#s5"><span class="num">05</span> 빼야 할 아이디어 3개</a>
+    <a href="#s6"><span class="num">06</span> 수정할 아이디어 4개</a>
+    <a href="#s7"><span class="num">07</span> Phase 1 최종 플로우</a>
+    <a href="#s8"><span class="num">08</span> 최종 판정</a>
+  </div>
+</div>
+
+<!-- 리서치 요약 Stats -->
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-num">9</div><div class="stat-label">분석한 해외 플랫폼</div></div>
+  <div class="stat-card"><div class="stat-num">7</div><div class="stat-label">추가 제안 아이디어</div></div>
+  <div class="stat-card"><div class="stat-num">3</div><div class="stat-label">삭제/축소 제안</div></div>
+  <div class="stat-card"><div class="stat-num">4</div><div class="stat-label">수정/강화 제안</div></div>
+</div>
+
+<!-- ===== SECTION 1 ===== -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div class="section-title">해외 벤치마크: 작동하는 모델들</div>
+  </div>
+
+  <p style="font-size:14px;color:var(--text-dim);margin-bottom:20px;">해외 9개 플랫폼을 분석한 결과, 빌드어스 모델의 각 요소는 이미 부분적으로 검증되어 있습니다.</p>
+
+  <div class="platform-row">
+    <div class="platform-card">
+      <div class="name">Bunnings (호주)</div>
+      <div class="revenue">AUD $18B</div>
+      <div class="model">무료 워크숍 → 자재 구매</div>
+      <div class="result pass">검증됨</div>
+    </div>
+    <div class="platform-card">
+      <div class="name">ManoMano (유럽)</div>
+      <div class="revenue">EUR 2.6B 기업가치</div>
+      <div class="model">전문 큐레이션 마켓</div>
+      <div class="result pass">작동 중</div>
+    </div>
+    <div class="platform-card">
+      <div class="name">Screwfix (영국)</div>
+      <div class="revenue">GBP £2.4B</div>
+      <div class="model">B2B→B2C 전환</div>
+      <div class="result pass">작동 중</div>
+    </div>
+  </div>
+  <div class="platform-row">
+    <div class="platform-card">
+      <div class="name">Houzz (미국)</div>
+      <div class="revenue">$4B → 축소</div>
+      <div class="model">영감 사진 → 마켓</div>
+      <div class="result fail">실패</div>
+    </div>
+    <div class="platform-card">
+      <div class="name">Angi (미국)</div>
+      <div class="revenue">$1.8B 피크</div>
+      <div class="model">리드젠 + 고정가</div>
+      <div class="result fail">매출 하락</div>
+    </div>
+    <div class="platform-card">
+      <div class="name">Wickes (영국)</div>
+      <div class="revenue">GBP £1.5B</div>
+      <div class="model">무료 설계→패키지 판매</div>
+      <div class="result pass">작동 중</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>빌드어스 = 이 조합</h3>
+    <table>
+      <tr><th>빌드어스 요소</th><th>벤치마크</th><th>검증 여부</th></tr>
+      <tr><td>무료 가이드 → 자재 구매</td><td>Bunnings 워크숍</td><td><span class="grade grade-s">검증됨</span></td></tr>
+      <tr><td>전문 큐레이션/맥락 추천</td><td>ManoMano Manodvisors</td><td><span class="grade grade-s">작동 중</span></td></tr>
+      <tr><td>업체가 수준 B2C 판매</td><td>Screwfix, Zoro</td><td><span class="grade grade-s">작동 중</span></td></tr>
+      <tr><td>B2B 공급망 기반 B2C 플랫폼</td><td>Ferguson/build.com</td><td><span class="grade grade-s">작동 중</span></td></tr>
+      <tr><td>무료 도구 → 자재 판매</td><td>Wickes 3D 디자인, IKEA 플래너</td><td><span class="grade grade-s">작동 중</span></td></tr>
+    </table>
+  </div>
+
+  <div class="insight">
+    <div class="label">핵심 발견</div>
+    <p><strong>빌드어스의 각 요소는 해외에서 개별적으로 검증됨.</strong> 하지만 이 요소들을 한 플랫폼에서 결합한 곳은 아직 없음. 이것이 기회이자 리스크 — Houzz처럼 "다 하다가 아무것도 못할" 수 있으므로 Phase별 집중이 필수.</p>
+  </div>
+
+  <div class="warning">
+    <div class="label">반드시 피해야 할 함정</div>
+    <p><strong>Houzz의 교훈:</strong> 영감(사진)으로 사람을 모으고 구매를 기대하면 실패. "구경하는 사람 ≠ 사는 사람"<br>
+    <strong>Angi의 교훈:</strong> 인테리어에서 고정가/표준화를 섣불리 시도하면 실패. 현장 변수가 너무 많음.<br>
+    <strong>Bunnings UK의 교훈:</strong> DIY 문화가 없는 곳에서 순수 셀프만 타겟하면 실패. 반셀프/직영공사까지 포함해야.</p>
+  </div>
+</div>
+
+<!-- ===== SECTION 2 ===== -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <div class="section-title">콘텐츠→커머스 전환율 검증</div>
+  </div>
+
+  <div class="card">
+    <h3>전환율 벤치마크</h3>
+    <table>
+      <tr><th>모델 유형</th><th>전환율</th><th>대표 사례</th></tr>
+      <tr><td>블로그/가이드 → 어필리에이트</td><td>1~5%</td><td>Wirecutter ($2억/년)</td></tr>
+      <tr><td>레시피 → 장보기</td><td>2~5%</td><td>Yummly, Tasty</td></tr>
+      <tr><td>SNS → 쇼핑</td><td>0.5~2%</td><td>Instagram, TikTok</td></tr>
+      <tr><td style="font-weight:700;color:var(--green);">도구(견적/플래너) → 구매</td><td style="font-weight:700;color:var(--green);">8~20%</td><td>IKEA 플래너, 태양광 견적</td></tr>
+      <tr><td>커뮤니티 추천 → 구매</td><td>3~8%</td><td>Reddit, 셀인카페 공구</td></tr>
+      <tr><td>YouTube → 구매</td><td>0.1~0.9%</td><td>DIY 채널 어필리에이트</td></tr>
+    </table>
+  </div>
+
+  <div class="success">
+    <div class="label">핵심 인사이트</div>
+    <p><strong>"읽기만 하는 콘텐츠"보다 "도구를 사용하는 콘텐츠"의 전환율이 3~10배 높다.</strong><br>
+    빌드어스는 가이드(읽기) + 자동견적/체크리스트(도구)를 결합하므로, <strong>5~15% 전환율이 현실적 목표.</strong><br><br>
+    기존 04_사업성-분석의 전환율(0.75%)은 "도구 없이 콘텐츠만 있을 때"의 수치. 도구가 제대로 작동하면 <strong>1.5~3%까지 가능</strong> → 12개월 시점 월 매출 1,150만 → <strong>1,700~3,900만원</strong>으로 상향.</p>
+  </div>
+
+  <div class="card">
+    <h3>IKEA 플래너가 가장 가까운 벤치마크</h3>
+    <p>IKEA 온라인 플래너 사용자의 <strong>구매 전환율: 15~20%</strong>. 플래너로 설계한 주문의 <strong>평균 객단가가 일반의 3~5배.</strong></p>
+    <p>빌드어스 자동견적도 동일한 구조: "도구로 만들어본 결과물 → 필요한 자재가 있다 → 바로 구매"</p>
+    <h4>전환율이 높은 5가지 조건</h4>
+    <table>
+      <tr><th>조건</th><th>빌드어스</th><th>판단</th></tr>
+      <tr><td>실행형 가이드인가?</td><td>O — 공정별 체크리스트</td><td><span class="grade grade-s">PASS</span></td></tr>
+      <tr><td>구매 타이밍이 "지금"인가?</td><td>O — 공사 중에 보는 가이드</td><td><span class="grade grade-s">PASS</span></td></tr>
+      <tr><td>같은 플랫폼에서 구매 가능?</td><td>△ — 마켓 미구축</td><td><span class="grade grade-b">핵심 과제</span></td></tr>
+      <tr><td>가격 우위가 있는가?</td><td>O (가설) — 업체가 수준</td><td><span class="grade grade-a">검증 필요</span></td></tr>
+      <tr><td>"뭘 사야 하는지" 알려주는가?</td><td>O — 가이드가 자재 직접 지정</td><td><span class="grade grade-s">PASS</span></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== SECTION 3 ===== -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <div class="section-num">03</div>
+    <div class="section-title">한국 시장 공백 확인</div>
+  </div>
+
+  <div class="card">
+    <h3>한국 인테리어 플랫폼 현황</h3>
+    <table>
+      <tr><th>플랫폼</th><th>강점</th><th>빌드어스 관점</th></tr>
+      <tr><td><strong>오늘의집</strong><br><span style="color:var(--text-dim)">MAU 800~900만</span></td><td>영감/쇼핑, 브랜드 파워</td><td>시공 관리 도구 없음, 셀프 시장 무관심. <strong>다른 게임.</strong></td></tr>
+      <tr><td><strong>집닥</strong></td><td>업체 중개 브랜드</td><td>위임자만 대상. <strong>타겟이 다름.</strong></td></tr>
+      <tr><td><strong>셀인카페</strong><br><span style="color:var(--text-dim)">회원 20만+</span></td><td>실전 지식, 커뮤니티</td><td>네이버 카페 한계. <strong>유일한 직접 경쟁자이자, 수요 검증 증거.</strong></td></tr>
+      <tr><td><strong>쿠팡/스마트스토어</strong></td><td>가격, 배송</td><td>"뭘 사야 하는지" 가이드 없음. <strong>쿠팡은 경쟁자가 아니라 보완재.</strong></td></tr>
+    </table>
+  </div>
+
+  <div class="insight">
+    <div class="label">시장 공백</div>
+    <p>한국 건설자재 시장 ~5조원 중 온라인 B2C 비중 극히 낮음. <strong>"콘텐츠 + 커머스" 결합 플랫폼은 한국 건설자재 분야에서 전무.</strong><br>
+    해외에서는 Bunnings/ManoMano/Floor & Decor가 이 공백을 각각의 방식으로 메우고 있지만, 한국에는 이런 플레이어가 없음.</p>
+  </div>
+</div>
+
+<!-- ===== SECTION 4 ===== -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <div class="section-num">04</div>
+    <div class="section-title">추가할 아이디어 7개</div>
+  </div>
+
+  <div class="card" style="border-color:rgba(34,197,94,0.3);">
+    <h3 style="color:var(--green);">A-1. 공정별 자재 키트 (One-Box Kit) <span class="phase phase-1">Phase 1</span></h3>
+    <p>"타일 시공에 필요한 모든 것, 한 박스" — 빌드어스의 <strong>킬러 상품</strong></p>
+    <h4>벤치마크</h4>
+    <p>Home Depot "Project Kit", Wickes 공정별 번들, IKEA 조립 키트</p>
+    <h4>왜 킬러인가</h4>
+    <p>1. "뭘 사야 하는지 모르겠다" = 셀프빌더 #1 불만을 <strong>완벽히 해결</strong><br>
+    2. 번들 판매는 개별 판매보다 <strong>마진이 더 좋음</strong><br>
+    3. 키트 박스에 빌드어스 <strong>QR코드 → 가이드 바로 접근</strong><br>
+    4. 유통사를 이미 보유 → Day 1부터 키트 제작 가능<br>
+    5. <strong>한국에 인테리어 공정별 키트를 파는 곳이 없음</strong></p>
+    <h4>초기 5종</h4>
+    <p>방수 키트 / 타일 시공 키트 / 도장 키트 / 마루 시공 키트 / 줄눈 보수 키트</p>
+  </div>
+
+  <div class="card" style="border-color:rgba(34,197,94,0.3);">
+    <h3 style="color:var(--green);">A-2. 자재 실물 샘플 배송 <span class="phase phase-1">Phase 1</span></h3>
+    <p>온라인 자재 구매 최대 장벽 "실물을 못 봐서" 제거</p>
+    <h4>벤치마크</h4>
+    <p><strong>Floor & Decor</strong>: 샘플 요청 → 본품 구매 전환율 <strong>25~35%</strong>. 매출 $4.3B의 핵심 리드 소스.</p>
+    <h4>핵심</h4>
+    <p>유통사를 운영하므로 샘플 확보가 <strong>거의 무비용</strong>. 배송비 3,000원 → 본품 구매 시 차감. 구현 난이도 <strong>최하</strong>, 전환율 효과 <strong>최대</strong>.</p>
+  </div>
+
+  <div class="card" style="border-color:rgba(34,197,94,0.3);">
+    <h3 style="color:var(--green);">A-3. 업체 견적서 비교 분석기 <span class="phase phase-1">Phase 1~2</span></h3>
+    <p>업체에 견적 받은 사람이 "이 견적이 합리적인지" 확인하는 도구 → <strong>TAM 확장</strong></p>
+    <h4>벤치마크</h4>
+    <p><strong>HomeAdvisor True Cost Guide</strong>: "내 견적이 적정한가" = 월간 수백만 방문의 핵심 키워드</p>
+    <h4>핵심</h4>
+    <p>빌드어스의 원래 타겟(셀프/반셀프)보다 넓은 오디언스를 잡음. 업체 견적 분석 → "이렇게 비싸면 차라리 직접?" → <strong>반셀프 전환 유도</strong></p>
+  </div>
+
+  <div class="card" style="border-color:rgba(34,197,94,0.3);">
+    <h3 style="color:var(--green);">A-4. 자재 호환성 체커 <span class="phase phase-1">Phase 1~2</span></h3>
+    <p>"이 타일 본드는 이 타일에 맞는가?" — 인테리어판 <strong>PC Part Picker</strong></p>
+    <h4>벤치마크</h4>
+    <p>PC Part Picker: 호환성 체크 → 구매 완료율 <strong>40~60% 상승</strong></p>
+    <h4>핵심</h4>
+    <p>"빌드어스에서 사면 실수 없다" = <strong>쿠팡과의 결정적 차별화</strong>. 대표님의 현장 경험이 호환성 데이터의 소스.</p>
+  </div>
+
+  <div class="card" style="border-color:rgba(34,197,94,0.2);">
+    <h3 style="color:var(--green);">A-5~7. 추가 아이디어 (Phase 2)</h3>
+    <table>
+      <tr><th>아이디어</th><th>벤치마크</th><th>Phase</th></tr>
+      <tr><td><strong>시공 타임랩스 UGC</strong> — 사용자 시공 기록이 다음 사용자의 가이드</td><td>iFixit, Houzz 사진</td><td><span class="phase phase-2">Phase 2</span></td></tr>
+      <tr><td><strong>실시간 공정 알림</strong> — "공사 네비게이션" 푸시 시스템</td><td>Duolingo, Headspace</td><td><span class="phase phase-2">Phase 2</span></td></tr>
+      <tr><td><strong>역경매 공동구매</strong> — 볼륨 디스카운트 소셜 구매</td><td>핀둬둬, 셀인카페 공구</td><td><span class="phase phase-2">Phase 2</span></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== SECTION 5 ===== -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num">05</div>
+    <div class="section-title">빼야 할 아이디어 3개</div>
+  </div>
+
+  <div class="card" style="border-color:rgba(239,68,68,0.3);">
+    <h3 style="color:var(--red);">B-1. 소비자용 시공 상세도면 → 축소</h3>
+    <h4>왜 빼야 하는가</h4>
+    <p>1. <strong>스케일 불가</strong> — 아파트 평형별, 구조별 맞춤 도면은 4인 팀으로 불가능<br>
+    2. Houzz Pro도 B2C 소비자 직접 사용에 실패하고 B2B로 피벗<br>
+    3. 반셀프빌더에게 필요한 건 도면이 아니라 <strong>체크리스트 + 가이드 + 자재 목록</strong></p>
+    <h4>대안</h4>
+    <p>"공정별 표준 시공 가이드 일러스트" — 한번 만들면 모든 사용자가 사용, 스케일 가능</p>
+  </div>
+
+  <div class="card" style="border-color:rgba(239,68,68,0.3);">
+    <h3 style="color:var(--red);">B-2. 중고자재몰 → Phase 3 이관</h3>
+    <h4>왜 빼야 하는가</h4>
+    <p>1. <strong>양면 마켓 콜드스타트</strong>가 가장 어려운 유형<br>
+    2. 자재가 무겁고 큼 → 택배 불가 → 지역 직거래만 가능 → 매칭 확률 극히 낮음<br>
+    3. 전 세계적으로 중고 건축자재 마켓플레이스로 의미 있게 성공한 사례 없음</p>
+    <h4>대안</h4>
+    <p>커뮤니티 게시판의 "자재 나눔/거래" 카테고리로 운영 (개발 비용 0)</p>
+  </div>
+
+  <div class="card" style="border-color:rgba(239,68,68,0.3);">
+    <h3 style="color:var(--red);">B-3. 대규모 커뮤니티 → Phase 1 최소화</h3>
+    <h4>왜 빼야 하는가</h4>
+    <p>1. <strong>빈 커뮤니티 = 유령도시</strong>. Day 1에 열어봤자 아무도 안 옴<br>
+    2. 커뮤니티 운영은 <strong>숨은 리소스 블랙홀</strong> (스팸, 분쟁, 품질 관리)<br>
+    3. Phase 1의 핵심은 "도구 → 구매" 전환 검증이지, 커뮤니티 구축이 아님</p>
+    <h4>대안</h4>
+    <p>Phase 1: AI 챗봇이 Q&A 80% 처리 + 카카오 오픈채팅방 (개발 비용 0)</p>
+  </div>
+</div>
+
+<!-- ===== SECTION 6 ===== -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <div class="section-num">06</div>
+    <div class="section-title">수정할 아이디어 4개</div>
+  </div>
+
+  <div class="card" style="border-color:rgba(234,179,8,0.3);">
+    <h3 style="color:var(--yellow);">C-1. 자동견적 → "비용 분석 + 절약 금액 강조"</h3>
+    <table>
+      <tr><th>AS-IS</th><th>TO-BE</th></tr>
+      <tr><td>"자동 견적서 생성"</td><td>"내 인테리어 예상 비용 분석"</td></tr>
+      <tr><td>단일 가격 제시</td><td>범위 제시 (절약형/표준형/업체의뢰)</td></tr>
+      <tr><td>"이 견적의 자재를 사세요"</td><td><strong>"업체 600만 → 빌드어스 280만. 320만원 절약."</strong></td></tr>
+    </table>
+    <p style="margin-top:12px;"><strong>근거:</strong> Angi $1.8B 매출인데 고정가 모델 실패 / EnergySage "절약 금액" 강조로 전환율 3~8%</p>
+  </div>
+
+  <div class="card" style="border-color:rgba(234,179,8,0.3);">
+    <h3 style="color:var(--yellow);">C-2. 마켓플레이스 → "전문가 큐레이션 + 전문가 가격"</h3>
+    <table>
+      <tr><th>AS-IS</th><th>TO-BE</th></tr>
+      <tr><td>"인터넷 최저가로 삽니다"</td><td>"전문가가 골라준 자재를, 전문가 가격에"</td></tr>
+      <tr><td>가격이 핵심 메시지</td><td>1순위: 뭘 사야 하는지 / 2순위: 실수 방지 / 3순위: 가격은 덤</td></tr>
+    </table>
+    <p style="margin-top:12px;"><strong>근거:</strong> ManoMano가 Amazon과 공존하는 이유 = 가격이 아니라 "전문 큐레이션". 가격은 따라올 수 있지만, 전문성은 따라올 수 없음.</p>
+  </div>
+
+  <div class="card" style="border-color:rgba(234,179,8,0.3);">
+    <h3 style="color:var(--yellow);">C-3. 유튜브 → 가이드 + 데이터 2트랙</h3>
+    <table>
+      <tr><th>트랙 1: 가이드 (기존)</th><th>트랙 2: 데이터 (신규)</th></tr>
+      <tr><td>"타일 붙이기 완벽 가이드"</td><td>"2026년 인테리어 자재 가격 리포트"</td></tr>
+      <tr><td>빌버 캐릭터 중심</td><td>"서울 25평 평균 비용 (100건 데이터)"</td></tr>
+      <tr><td>역할: 유입 + 브랜드</td><td>역할: <strong>SEO 1위 + 바이럴 + 언론 인용</strong></td></tr>
+    </table>
+    <p style="margin-top:12px;"><strong>근거:</strong> Zillow가 주택 가격 데이터 하나로 부동산 검색 표준이 됨. 유통사 운영 = 실제 자재 가격 데이터를 유일하게 보유.</p>
+  </div>
+
+  <div class="card" style="border-color:rgba(234,179,8,0.3);">
+    <h3 style="color:var(--yellow);">C-4. AI 챗봇 → "구매 어시스턴트"</h3>
+    <table>
+      <tr><th>AS-IS</th><th>TO-BE</th></tr>
+      <tr><td>"인테리어 궁금한 거 물어보세요"</td><td>"필요한 자재를 찾아드립니다"</td></tr>
+      <tr><td>KPI: 상담 만족도</td><td>KPI: <strong>자재 구매 전환율</strong></td></tr>
+      <tr><td>정보 제공</td><td>모든 답변에 자재 추천 + 키트 구매 링크 포함</td></tr>
+    </table>
+    <p style="margin-top:12px;"><strong>근거:</strong> Amazon Rufus, Klarna AI — "대화가 곧 쇼핑카트"</p>
+  </div>
+</div>
+
+<!-- ===== SECTION 7 ===== -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <div class="section-num">07</div>
+    <div class="section-title">Phase 1 최종 플로우</div>
+  </div>
+
+  <div class="flow">
+    <h3 style="margin-bottom:20px;">사용자가 경험하는 "하나의 흐름"</h3>
+
+    <div class="flow-step">
+      <div class="flow-icon">1</div>
+      <div class="flow-content">
+        <div class="title">검색 유입</div>
+        <div class="desc">"래미안 25평 인테리어 비용" or "업체 견적 적정가" 검색</div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+
+    <div class="flow-step">
+      <div class="flow-icon">2</div>
+      <div class="flow-content">
+        <div class="title">빌드어스 도착</div>
+        <div class="desc">아파트별 평균 비용 데이터 or 견적 비교 분석기</div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+
+    <div class="flow-step">
+      <div class="flow-icon">3</div>
+      <div class="flow-content">
+        <div class="title">비용 분석</div>
+        <div class="desc">"업체 의뢰 시 600만원 → 빌드어스와 함께 하면 280만원. <strong>320만원 절약.</strong>"</div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+
+    <div class="flow-step">
+      <div class="flow-icon">4</div>
+      <div class="flow-content">
+        <div class="title">자재 목록 + 수량 계산</div>
+        <div class="desc">필요 자재 자동 산출 + 호환성 확인 + 인터넷가 대비 절약 금액 표시</div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+
+    <div class="flow-step">
+      <div class="flow-icon">5</div>
+      <div class="flow-content">
+        <div class="title">키트 구매 or 샘플 신청</div>
+        <div class="desc">"타일 시공 키트 한번에 담기" / 실물 확인이 필요한 자재는 샘플 배송</div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+
+    <div class="flow-step">
+      <div class="flow-icon">6</div>
+      <div class="flow-content">
+        <div class="title">프로젝트 관리 + AI 어시스턴트</div>
+        <div class="desc">체크리스트 시작 + 사진 기록 + "모르겠는 건 물어보세요 → 바로 자재 추천"</div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+
+    <div class="flow-step">
+      <div class="flow-icon">7</div>
+      <div class="flow-content">
+        <div class="title">시공 완료 → UGC</div>
+        <div class="desc">비포/애프터 + 사용 자재 태그 → 다음 사용자의 참고 자료가 됨</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quote">
+    이 흐름 하나가 완벽하면 나머지는 다 나중에 붙여도 됩니다.
+  </div>
+
+  <div class="card">
+    <h3>Phase 1 기능 목록 (최종)</h3>
+    <table>
+      <tr><th>#</th><th>기능</th><th>역할</th><th>상태</th></tr>
+      <tr><td>1</td><td><strong>비용 분석기</strong> (자동견적 수정판)</td><td>유입 도구</td><td>기존 수정</td></tr>
+      <tr><td>2</td><td><strong>자재 마켓플레이스</strong> (큐레이션 포지셔닝)</td><td>수익 엔진</td><td>기존 수정</td></tr>
+      <tr><td>3</td><td><strong>공정별 자재 키트</strong></td><td>킬러 상품</td><td style="color:var(--green);font-weight:600;">신규</td></tr>
+      <tr><td>4</td><td><strong>자재 샘플 배송</strong></td><td>전환 보조</td><td style="color:var(--green);font-weight:600;">신규</td></tr>
+      <tr><td>5</td><td><strong>AI 구매 어시스턴트</strong></td><td>유입 + 전환</td><td>기존 수정</td></tr>
+      <tr><td>6</td><td><strong>프로젝트 관리 도구</strong> (무료)</td><td>체류/전환</td><td>기존 유지</td></tr>
+      <tr><td>7</td><td><strong>가격 투명성 UI</strong> (인터넷가 비교)</td><td>구매 전환</td><td style="color:var(--green);font-weight:600;">신규</td></tr>
+      <tr><td>8</td><td><strong>자재 수량 자동 계산</strong></td><td>구매 전환</td><td style="color:var(--green);font-weight:600;">신규</td></tr>
+      <tr><td>9</td><td><strong>업체 견적 비교 분석기</strong> (수동 입력)</td><td>TAM 확장</td><td style="color:var(--green);font-weight:600;">신규</td></tr>
+      <tr><td>10</td><td><strong>아파트별 비용 데이터</strong> (SEO)</td><td>유입</td><td style="color:var(--green);font-weight:600;">신규</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== SECTION 8 ===== -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <div class="section-num">08</div>
+    <div class="section-title">최종 판정</div>
+  </div>
+
+  <div class="verdict">
+    <div class="big-grade">A-</div>
+    <h2>v2 등급 유지, 실행 로드맵 강화</h2>
+    <p style="color:var(--text-dim);font-size:14px;max-width:600px;margin:12px auto 0;">
+      리서치 결과, 빌드어스의 핵심 모델은 해외에서 <strong>각각 검증됨</strong>.<br>
+      다만 이 조합을 한 플랫폼에서 해낸 곳은 아직 없음 — 그것이 기회이자 도전.
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>리서치가 바꾼 핵심 판단들</h3>
+    <table>
+      <tr><th>항목</th><th>v2 분석 (대표 피드백)</th><th>딥리서치 후</th></tr>
+      <tr><td>전환율 추정</td><td>0.75% (보수적)</td><td><strong>1.5~3%</strong> (도구 품질에 따라. IKEA 플래너 벤치마크)</td></tr>
+      <tr><td>12개월 월 매출</td><td>~1,150만원</td><td><strong>1,700~3,900만원</strong> (도구 결합 시)</td></tr>
+      <tr><td>핵심 경쟁력</td><td>"업체가 수준 가격"</td><td><strong>"전문가 큐레이션 + 전문가 가격"</strong> (가격만으로는 쿠팡에 밀림)</td></tr>
+      <tr><td>킬러 상품</td><td>없음 (기능 나열)</td><td><strong>공정별 자재 키트</strong> (인테리어판 IKEA)</td></tr>
+      <tr><td>시공 상세도면</td><td>핵심 기능 #2</td><td><strong>축소</strong> — 표준 가이드 일러스트로 대체</td></tr>
+      <tr><td>중고자재몰</td><td>핵심 기능 #4</td><td><strong>Phase 3 이관</strong> — 양면 마켓 콜드스타트 문제</td></tr>
+      <tr><td>유튜브 전략</td><td>가이드 1트랙</td><td><strong>가이드 + 데이터 2트랙</strong> (Zillow 효과)</td></tr>
+      <tr><td>가장 큰 리스크</td><td>유튜브 성장 속도</td><td>유지. 단, SEO + 견적 비교 분석기로 <strong>유튜브 의존도 낮추기 가능</strong></td></tr>
+    </table>
+  </div>
+
+  <div class="quote">
+    "빌드어스에서 사면 실패하지 않는다"가 "빌드어스에서 사면 싸다"보다 강력한 구매 동기이다.<br>
+    가격은 따라올 수 있지만, 전문성과 신뢰는 따라올 수 없다.
+  </div>
+
+  <div class="card">
+    <h3>빌드어스 한 줄 정의 (수정)</h3>
+    <table>
+      <tr><th>버전</th><th>한 줄 정의</th></tr>
+      <tr><td>v1 (대표님 원안)</td><td>"소비자들이 직접적인 이득을 취하게 하는 3세대 플랫폼"</td></tr>
+      <tr><td>v2 (분석 후)</td><td>"지식은 무료, 도구는 플랫폼" — 가이드 + 자재 구매 원스톱</td></tr>
+      <tr><td style="color:var(--accent);font-weight:700;">v3 (리서치 후)</td><td style="color:var(--accent);font-weight:700;">"인테리어판 IKEA" — 시공 가이드 + 자재 키트 + 전문가 가격을 한 곳에</td></tr>
+    </table>
+  </div>
+
+  <div class="success">
+    <div class="label">다음 단계</div>
+    <p>1. <strong>공정별 키트 5종 설계</strong> — 구성품, 원가, 판매가, 마진 계산<br>
+    2. <strong>Phase 1 MVP 스펙 확정</strong> — 위 10개 기능의 상세 스펙<br>
+    3. <strong>자동견적 → 키트 구매 UX 플로우</strong> — 와이어프레임<br>
+    4. <strong>AI 구매 어시스턴트 MVP</strong> — 16개 체크리스트 RAG 프로토타입<br>
+    5. <strong>아파트별 비용 데이터</strong> — 초기 50개 단지 데이터 수집</p>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div style="text-align:center;padding:60px 0 0;color:var(--text-dim);font-size:12px;">
+  <p>빌드어스 딥 리서치 리포트 | 2026-03-28</p>
+  <p style="margin-top:4px;">리서치 소스: 해외 플랫폼 9개 분석 + 콘텐츠-커머스 전환율 검증 + 한국 시장 분석 + 신규 아이디어 제안</p>
+  <p style="margin-top:4px;">관련 문서: 06_해외-플랫폼-분석-v1.md / 06_콘텐츠-커머스-모델-리서치-v1.md / 07_아이디어-제안-v1.md</p>
+</div>
+
+</div>
+</body>
+</html>

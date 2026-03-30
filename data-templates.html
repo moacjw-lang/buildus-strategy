@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>빌드어스 — 데이터 정리 가이드</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg:#0a0a0f; --card:#12121a; --card-border:#1e1e2e;
+    --text:#e4e4e7; --text-dim:#71717a; --text-bright:#fafafa;
+    --accent:#6366f1; --accent-glow:rgba(99,102,241,0.15);
+    --green:#22c55e; --green-dim:rgba(34,197,94,0.12);
+    --yellow:#eab308; --yellow-dim:rgba(234,179,8,0.12);
+    --red:#ef4444; --red-dim:rgba(239,68,68,0.12);
+    --orange:#f97316; --orange-dim:rgba(249,115,22,0.12);
+    --blue:#3b82f6; --blue-dim:rgba(59,130,246,0.12);
+    --cyan:#06b6d4; --cyan-dim:rgba(6,182,212,0.12);
+  }
+  body { font-family:'Noto Sans KR',-apple-system,sans-serif; background:var(--bg); color:var(--text); line-height:1.7; -webkit-font-smoothing:antialiased; }
+  .container { max-width:1080px; margin:0 auto; padding:60px 24px 120px; }
+
+  .hero { text-align:center; padding:60px 0 20px; }
+  .hero-label { font-size:12px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:16px; }
+  .hero h1 { font-size:36px; font-weight:900; color:var(--text-bright); line-height:1.2; margin-bottom:12px; }
+  .hero .sub { font-size:14px; color:var(--text-dim); font-weight:300; }
+
+  .data-card { background:var(--card); border:1px solid var(--card-border); border-radius:16px; margin-bottom:24px; overflow:hidden; }
+  .data-card-header { padding:20px 28px; border-bottom:1px solid var(--card-border); display:flex; align-items:center; gap:14px; }
+  .data-card-header .num { width:32px; height:32px; border-radius:8px; background:var(--accent-glow); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:900; flex-shrink:0; }
+  .data-card-header h3 { font-size:16px; font-weight:700; color:var(--text-bright); }
+  .data-card-header .uses { font-size:11px; color:var(--text-dim); margin-left:auto; }
+  .data-card-body { padding:20px 28px; }
+
+  .format-label { font-size:11px; font-weight:700; color:var(--cyan); letter-spacing:0.5px; text-transform:uppercase; margin-bottom:8px; }
+
+  .t { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:4px; }
+  .t th { text-align:left; padding:8px 10px; background:rgba(99,102,241,0.08); color:var(--accent); font-weight:600; font-size:11px; border-bottom:1px solid var(--card-border); white-space:nowrap; }
+  .t td { padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.03); vertical-align:top; }
+  .t tr.ex td { background:rgba(34,197,94,0.04); color:var(--text); }
+
+  .ex-label { display:inline-block; font-size:10px; font-weight:700; color:var(--green); background:var(--green-dim); padding:2px 8px; border-radius:4px; margin-bottom:8px; }
+
+  .note { font-size:12px; color:var(--text-dim); margin-top:12px; padding:10px 14px; background:rgba(255,255,255,0.02); border-radius:8px; border-left:2px solid var(--card-border); }
+  .note strong { color:var(--text); }
+
+  .guide-steps { margin:12px 0; padding:0; }
+  .guide-steps li { list-style:none; display:flex; gap:10px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:12px; }
+  .guide-steps li:last-child { border-bottom:none; }
+  .guide-steps .sn { width:22px; height:22px; border-radius:6px; background:rgba(99,102,241,0.1); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; }
+
+  .divider { margin:48px 0 24px; padding-bottom:12px; border-bottom:1px solid var(--card-border); }
+  .divider h2 { font-size:20px; font-weight:700; color:var(--text-bright); }
+
+  @media (max-width:768px) { .t { font-size:11px; } .t th,.t td { padding:6px 8px; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+  <div class="hero-label">Data Guide</div>
+  <h1>필요 데이터 정리 가이드</h1>
+  <div class="sub">16개 데이터 &middot; 정리 형식 + 예시 &middot; 2026-03-29</div>
+</div>
+
+
+<!-- ──────────────────────── -->
+<div class="divider"><h2>자재 데이터</h2></div>
+
+<!-- 1 -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">1</div>
+    <h3>자재 카탈로그 + 가격</h3>
+    <div class="uses">마켓플레이스 · 비용 분석기 · 가격 비교 · 수량 계산기</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">엑셀 — 취급 자재 전체, 자재 1개 = 1행</div>
+    <table class="t">
+      <thead><tr><th>자재코드</th><th>품명</th><th>규격</th><th>브랜드</th><th>제조사</th><th>카테고리</th><th>단위</th><th>판매단위</th><th>도매가</th><th>업체가</th><th>판매가</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>WP-001</td><td>수성 방수액</td><td>18L</td><td>아이나비</td><td>OO화학</td><td>방수</td><td>L</td><td>통(18L)</td><td>35,000</td><td>42,000</td><td>45,000</td></tr>
+        <tr class="ex"><td>TL-012</td><td>폴리싱 타일</td><td>600×600</td><td>동서</td><td>동서세라믹</td><td>타일</td><td>장</td><td>박스(8장)</td><td>3,500</td><td>4,200</td><td>4,800</td></tr>
+        <tr class="ex"><td>PT-005</td><td>수성 페인트</td><td>4L</td><td>KCC</td><td>KCC</td><td>도장</td><td>L</td><td>캔(4L)</td><td>18,000</td><td>22,000</td><td>25,000</td></tr>
+      </tbody>
+    </table>
+    <div class="note"><strong>판매단위</strong> = 최소 판매 단위. 수량 계산기에서 올림 계산에 사용.</div>
+  </div>
+</div>
+
+<!-- 2 -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">2</div>
+    <h3>인터넷 최저가</h3>
+    <div class="uses">가격 투명성 UI ("OO원 절약")</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">엑셀 — 카탈로그 자재코드 기준, 월 1회 업데이트</div>
+    <table class="t">
+      <thead><tr><th>자재코드</th><th>품명</th><th>쿠팡 가격</th><th>네이버 최저가</th><th>빌드어스 가격</th><th>절약 금액</th><th>조사일</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>WP-001</td><td>수성 방수액 18L</td><td>58,000</td><td>52,000</td><td>45,000</td><td>7,000 (13%)</td><td>2026-04-01</td></tr>
+        <tr class="ex"><td>TL-012</td><td>폴리싱 타일 1box</td><td>42,000</td><td>38,000</td><td>34,000</td><td>4,000 (10%)</td><td>2026-04-01</td></tr>
+      </tbody>
+    </table>
+    <div class="note">동일 제품(브랜드+규격) 검색. 없으면 유사 제품 가격 + 비고에 "유사" 표기.</div>
+  </div>
+</div>
+
+<!-- 3 -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">3</div>
+    <h3>공급사 정보</h3>
+    <div class="uses">마켓플레이스 운영</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">엑셀 — 공급사 1개 = 1행</div>
+    <table class="t">
+      <thead><tr><th>공급사명</th><th>취급 카테고리</th><th>주요 자재</th><th>리드타임</th><th>최소 주문</th><th>반품 조건</th><th>결제 조건</th><th>연락처</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>OO건자재</td><td>방수, 도장</td><td>방수액, 페인트</td><td>2영업일</td><td>10만원</td><td>미개봉 7일</td><td>월말 정산</td><td>010-XXXX</td></tr>
+        <tr class="ex"><td>XX세라믹</td><td>타일</td><td>폴리싱, 포세린</td><td>3~5영업일</td><td>30만원</td><td>파손만 교환</td><td>선결제</td><td>010-XXXX</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 4 -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">4</div>
+    <h3>배송 정보</h3>
+    <div class="uses">마켓플레이스 배송</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">엑셀 — 카탈로그(#1)에 열 추가해도 됨</div>
+    <table class="t">
+      <thead><tr><th>자재코드</th><th>품명</th><th>무게(kg)</th><th>배송 방법</th><th>예상 배송일</th><th>배송비 기준</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>WP-001</td><td>수성 방수액 18L</td><td>20</td><td>화물</td><td>2~3일</td><td>착불 or 5만 이상 무료</td></tr>
+        <tr class="ex"><td>PT-005</td><td>수성 페인트 4L</td><td>5</td><td>택배</td><td>1~2일</td><td>3만 이상 무료</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 5 -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">5</div>
+    <h3>샘플 정보</h3>
+    <div class="uses">샘플 배송 서비스</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">엑셀 — 샘플 가능 자재만 (타일, 마루, 페인트 등)</div>
+    <table class="t">
+      <thead><tr><th>자재코드</th><th>품명</th><th>샘플 크기</th><th>무료/유료</th><th>비용</th><th>현재 재고</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>TL-012</td><td>폴리싱 타일</td><td>1장</td><td>무료</td><td>—</td><td>50장</td></tr>
+        <tr class="ex"><td>FL-003</td><td>강마루</td><td>1장</td><td>유료</td><td>3,000원</td><td>30장</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 6 -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">6</div>
+    <h3>상품 사진 + 설명</h3>
+    <div class="uses">마켓플레이스 상품 페이지</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">사진 — 자재당 2~3장</div>
+    <table class="t">
+      <thead><tr><th>사진 종류</th><th>내용</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>정면</td><td>패키지 전체 (라벨 보이게)</td></tr>
+        <tr class="ex"><td>실물/질감</td><td>내용물 or 소재 클로즈업</td></tr>
+        <tr class="ex"><td>시공 적용</td><td>실제 시공된 모습 (있으면)</td></tr>
+      </tbody>
+    </table>
+    <div class="format-label" style="margin-top:16px;">설명 텍스트 — 자재당 1건</div>
+    <div class="note">
+      <strong>제품명:</strong> [브랜드] [품명] [규격]<br>
+      <strong>한줄 요약:</strong> "욕실 바닥/벽 방수에 사용하는 수성 방수액. 2회 도포로 완벽 방수."<br>
+      <strong>특징:</strong> 3~5개 불릿<br>
+      <strong>추천 공정:</strong> 이 자재가 쓰이는 공정<br>
+      <strong>주의사항:</strong> 시공 시 주의할 점
+    </div>
+  </div>
+</div>
+
+
+<!-- ──────────────────────── -->
+<div class="divider"><h2>공정 데이터</h2></div>
+
+<!-- 7 -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">7</div>
+    <h3>공정별 시공 가이드</h3>
+    <div class="uses">마켓플레이스 · 유튜브 · AI 챗봇</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">문서 — 공정 1개 = 1문서, 아래 구조로 작성</div>
+    <ul class="guide-steps">
+      <li><div class="sn">1</div><div><strong>공정 개요</strong> — 뭔지, 왜 하는지, 안 하면 어떻게 되는지</div></li>
+      <li><div class="sn">2</div><div><strong>필요 도구</strong> — 자재 외 도구 목록 (롤러, 헤라, 테이프 등)</div></li>
+      <li><div class="sn">3</div><div><strong>시공 순서</strong> — 단계별. 각 단계마다: ① 작업 내용 ② 주의점 ③ 자주 하는 실수</div></li>
+      <li><div class="sn">4</div><div><strong>양생/건조</strong> — 시간, 온도 조건, 하면 안 되는 것</div></li>
+      <li><div class="sn">5</div><div><strong>완료 확인</strong> — 잘 됐는지 확인하는 방법</div></li>
+      <li><div class="sn">6</div><div><strong>셀프 난이도</strong> — 상/중/하 + 한줄 코멘트</div></li>
+    </ul>
+    <span class="ex-label">예시 — 방수</span>
+    <div class="note">
+      <strong>개요:</strong> 욕실 바닥/벽 하부에 방수층 형성. 안 하면 아래층 누수.<br>
+      <strong>도구:</strong> 롤러, 붓, 마스킹 테이프, 부직포 커터<br>
+      <strong>순서:</strong><br>
+      1. 바닥 청소 — <em>분진 남으면 부착력↓</em><br>
+      2. 드레인 마스킹 — <em>안 하면 배수구 막힘</em><br>
+      3. 1차 도포 (바닥+벽 30cm) — <em>한 방향으로만</em><br>
+      4. 부직포 깔기 — <em>겹침 5cm 이상</em><br>
+      5. 2차 도포 — <em>1차와 교차 방향</em><br>
+      6. 코너/드레인 보강<br>
+      <strong>양생:</strong> 24~48시간, 밟지 말 것<br>
+      <strong>확인:</strong> 물 채우기 24시간 테스트<br>
+      <strong>난이도:</strong> 중 — 순서만 지키면 셀프 가능
+    </div>
+  </div>
+</div>
+
+<!-- 8 -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">8</div>
+    <h3>공정-자재 매핑</h3>
+    <div class="uses">비용 분석기 · 수량 계산기 · AI 챗봇</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">엑셀 — 공정 × 자재 조합, 1조합 = 1행</div>
+    <table class="t">
+      <thead><tr><th>공정</th><th>자재명</th><th>용도</th><th>필수/선택</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>방수</td><td>수성 방수액</td><td>방수층 형성</td><td>필수</td><td>2회 도포 기준</td></tr>
+        <tr class="ex"><td>방수</td><td>부직포</td><td>보강재</td><td>필수</td><td>코너 보강용 별도</td></tr>
+        <tr class="ex"><td>방수</td><td>프라이머</td><td>바탕 처리</td><td>선택</td><td>구축 바닥일 때만</td></tr>
+      </tbody>
+    </table>
+    <div class="note">자재명은 카탈로그(#1)의 실제 제품명과 매칭해야 함.</div>
+  </div>
+</div>
+
+<!-- 9 -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">9</div>
+    <h3>자재별 단위 소요량 + 로스율</h3>
+    <div class="uses">비용 분석기 · 수량 계산기</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">엑셀 — 매핑(#8)에 열 추가해도 됨</div>
+    <table class="t">
+      <thead><tr><th>공정</th><th>자재명</th><th>단위</th><th>1㎡당 소요량</th><th>로스율(%)</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>방수</td><td>수성 방수액</td><td>L</td><td>0.6</td><td>10</td><td>2회 도포 (1회 0.3L)</td></tr>
+        <tr class="ex"><td>타일</td><td>600×600 타일</td><td>장</td><td>2.8</td><td>10</td><td>커팅 손실 포함</td></tr>
+        <tr class="ex"><td>도장</td><td>수성 페인트</td><td>L</td><td>0.15</td><td>5</td><td>2회 도장 기준</td></tr>
+      </tbody>
+    </table>
+    <div class="note">비용 분석기 계산: 면적 × 소요량 × (1 + 로스율) × 단가 = 자재비</div>
+  </div>
+</div>
+
+<!-- 10 -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">10</div>
+    <h3>자재 호환성</h3>
+    <div class="uses">호환성 체커 · 마켓플레이스 · AI 챗봇</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">엑셀 — NG/조건부만 기록 (OK는 안 적어도 됨)</div>
+    <table class="t">
+      <thead><tr><th>자재 A</th><th>자재 B</th><th>판정</th><th>사유</th><th>대체 추천</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>유성 방수재</td><td>수성 타일 본드</td><td style="color:var(--red);font-weight:700;">NG</td><td>유성 위에 수성 부착력 없음</td><td>에폭시 본드</td></tr>
+        <tr class="ex"><td>시멘트 방수재</td><td>PVC 타일</td><td style="color:var(--yellow);font-weight:700;">조건부</td><td>완전 경화(72시간) 후에만 가능</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 11 -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">11</div>
+    <h3>공정별 적정 단가</h3>
+    <div class="uses">견적 비교기</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">엑셀 — 공정 1개 = 1행</div>
+    <table class="t">
+      <thead><tr><th>공정</th><th>자재비 (㎡당)</th><th>인건비 (㎡당)</th><th>적정 합계 범위</th><th>기능공 일당</th><th>㎡당 소요 공수</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>방수</td><td>1~2만</td><td>2~3만</td><td>3~5만/㎡</td><td>25만/일</td><td>0.1인·일</td></tr>
+        <tr class="ex"><td>타일</td><td>3~8만</td><td>3~5만</td><td>6~13만/㎡</td><td>30만/일</td><td>0.15인·일</td></tr>
+        <tr class="ex"><td>도장</td><td>0.3~1만</td><td>0.5~1만</td><td>1~2만/㎡</td><td>20만/일</td><td>0.05인·일</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 12 -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">12</div>
+    <h3>표준 공정 순서</h3>
+    <div class="uses">프로젝트 관리 도구</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">엑셀 — 전체 공정 흐름</div>
+    <table class="t">
+      <thead><tr><th>순서</th><th>공정</th><th>선행 공정</th><th>시공일</th><th>양생일</th><th>합계</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>1</td><td>철거</td><td>—</td><td>2일</td><td>—</td><td>2일</td></tr>
+        <tr class="ex"><td>2</td><td>설비 (배관)</td><td>철거</td><td>2일</td><td>—</td><td>2일</td></tr>
+        <tr class="ex"><td>3</td><td>방수</td><td>설비</td><td>1일</td><td>2일</td><td>3일</td></tr>
+        <tr class="ex"><td>4</td><td>타일</td><td>방수</td><td>3일</td><td>1일</td><td>4일</td></tr>
+        <tr class="ex"><td>5</td><td>줄눈</td><td>타일</td><td>1일</td><td>1일</td><td>2일</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ──────────────────────── -->
+<div class="divider"><h2>비용 데이터</h2></div>
+
+<!-- 13 -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">13</div>
+    <h3>공간 유형별 표준 면적</h3>
+    <div class="uses">비용 분석기 · 수량 계산기</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">엑셀 — 평형대별 1행</div>
+    <table class="t">
+      <thead><tr><th>평형대</th><th>욕실(㎡)</th><th>주방(㎡)</th><th>거실(㎡)</th><th>안방(㎡)</th><th>작은방(㎡)</th><th>베란다(㎡)</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>18평 (59㎡)</td><td>3.5</td><td>5</td><td>14</td><td>10</td><td>7</td><td>5</td></tr>
+        <tr class="ex"><td>25평 (84㎡)</td><td>4.5</td><td>7</td><td>20</td><td>13</td><td>9</td><td>7</td></tr>
+        <tr class="ex"><td>34평 (112㎡)</td><td>5.5</td><td>9</td><td>28</td><td>16</td><td>11</td><td>9</td></tr>
+      </tbody>
+    </table>
+    <div class="note">대략 추정이면 충분. 사용자가 직접 입력할 수도 있지만 기본값 제공 용도.</div>
+  </div>
+</div>
+
+<!-- 14 -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">14</div>
+    <h3>스타일/등급별 자재 변형</h3>
+    <div class="uses">비용 분석기</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">엑셀 — 공정 × 공간 × 스타일 × 등급 조합</div>
+    <table class="t">
+      <thead><tr><th>공정</th><th>공간</th><th>스타일</th><th>등급</th><th>추천 자재</th><th>㎡당 예상 자재비</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>타일</td><td>욕실 바닥</td><td>모던</td><td>경제</td><td>300×600 무광 그레이 (국산)</td><td>~3만</td></tr>
+        <tr class="ex"><td>타일</td><td>욕실 바닥</td><td>모던</td><td>표준</td><td>600×600 폴리싱 (국산)</td><td>~5만</td></tr>
+        <tr class="ex"><td>타일</td><td>욕실 바닥</td><td>모던</td><td>프리미엄</td><td>600×600 대리석 (이탈리아)</td><td>~12만</td></tr>
+      </tbody>
+    </table>
+    <div class="note">스타일 구분 없는 공정(방수, 배관 등)은 스타일 칸 "—"로 비워둠.</div>
+  </div>
+</div>
+
+<!-- 15 -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">15</div>
+    <h3>아파트별 비용 추정</h3>
+    <div class="uses">SEO 랜딩 · 비용 분석기</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">문서 — 단지별 1장</div>
+    <table class="t">
+      <thead><tr><th>항목</th><th>내용</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td style="font-weight:600;">단지명</td><td>래미안 OO (서울 강남구)</td></tr>
+        <tr class="ex"><td style="font-weight:600;">평형</td><td>25평 (84㎡)</td></tr>
+      </tbody>
+    </table>
+    <table class="t" style="margin-top:12px;">
+      <thead><tr><th>공정</th><th>셀프 자재비</th><th>반셀프</th><th>업체 의뢰</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>욕실 방수</td><td>15만</td><td>40만</td><td>60만</td><td>욕실 1개</td></tr>
+        <tr class="ex"><td>욕실 타일</td><td>35만</td><td>80만</td><td>120만</td><td>바닥+벽</td></tr>
+        <tr class="ex"><td>도장 (전체)</td><td>30만</td><td>70만</td><td>100만</td><td>거실+방 3개</td></tr>
+        <tr class="ex"><td style="font-weight:700;">합계</td><td style="font-weight:700;">280만</td><td style="font-weight:700;">450만</td><td style="font-weight:700;">650만</td><td></td></tr>
+      </tbody>
+    </table>
+    <div class="note">경험 기반 추정이면 충분. "참고 범위"로 포지셔닝.</div>
+  </div>
+</div>
+
+
+<!-- ──────────────────────── -->
+<div class="divider"><h2>콘텐츠 데이터</h2></div>
+
+<!-- 16 -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">16</div>
+    <h3>체크리스트 Q&A 변환</h3>
+    <div class="uses">AI 구매 어시스턴트 RAG</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">엑셀 — 1질문 = 1행</div>
+    <table class="t">
+      <thead><tr><th>공정</th><th>질문</th><th>답변</th><th>관련 자재</th><th>출처</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>방수</td><td>욕실 방수 꼭 해야 하나요?</td><td>네, 필수. 안 하면 아래층 누수 → 보상 문제. 구축은 기존 방수 노후로 반드시 재시공.</td><td>수성 방수액, 부직포</td><td>체크리스트 04 #3</td></tr>
+        <tr class="ex"><td>방수</td><td>방수 위에 타일 바로 붙여도 되나요?</td><td>경화(24~48시간) 후 가능. 덜 마른 상태 시공 시 방수층 손상.</td><td>타일 본드</td><td>체크리스트 04 #7</td></tr>
+      </tbody>
+    </table>
+    <div class="note">기존 체크리스트 항목을 "소비자가 물어볼 법한 질문"으로 변환. 답변 정확도 검수 필수.</div>
+  </div>
+</div>
+
+<!-- 17 (SEO) -->
+<div class="data-card">
+  <div class="data-card-header">
+    <div class="num">17</div>
+    <h3>SEO 키워드 리스트</h3>
+    <div class="uses">SEO 유입</div>
+  </div>
+  <div class="data-card-body">
+    <div class="format-label">엑셀</div>
+    <table class="t">
+      <thead><tr><th>키워드</th><th>월간 검색량</th><th>경쟁도</th><th>검색 의도</th><th>연결 기능</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>래미안 인테리어 비용</td><td>1,200</td><td>중</td><td>정보 탐색</td><td>아파트별 비용 페이지</td></tr>
+        <tr class="ex"><td>셀프 방수 방법</td><td>800</td><td>중</td><td>가이드</td><td>시공 가이드 + 마켓플레이스</td></tr>
+        <tr class="ex"><td>인테리어 견적 적정가</td><td>2,400</td><td>높</td><td>비교</td><td>견적 비교기</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<div style="text-align:center;margin-top:48px;">
+  <p style="font-size:13px;color:var(--text-dim);">빌드어스 데이터 정리 가이드 &middot; 2026-03-29</p>
+</div>
+
+</div>
+</body>
+</html>
