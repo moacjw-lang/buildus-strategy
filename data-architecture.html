@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>빌드어스 — 데이터 아키텍처</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg:#0a0a0f; --card:#12121a; --card-border:#1e1e2e;
+    --text:#e4e4e7; --text-dim:#71717a; --text-bright:#fafafa;
+    --accent:#6366f1; --accent-glow:rgba(99,102,241,0.15);
+    --green:#22c55e; --green-dim:rgba(34,197,94,0.12);
+    --yellow:#eab308; --yellow-dim:rgba(234,179,8,0.12);
+    --red:#ef4444; --orange:#f97316; --orange-dim:rgba(249,115,22,0.12);
+    --blue:#3b82f6; --blue-dim:rgba(59,130,246,0.12);
+    --cyan:#06b6d4; --cyan-dim:rgba(6,182,212,0.12);
+    --pink:#ec4899; --pink-dim:rgba(236,72,153,0.12);
+  }
+  body { font-family:'Noto Sans KR',-apple-system,sans-serif; background:var(--bg); color:var(--text); line-height:1.7; -webkit-font-smoothing:antialiased; }
+  .container { max-width:1200px; margin:0 auto; padding:60px 24px 120px; }
+
+  .hero { text-align:center; padding:60px 0 20px; }
+  .hero-label { font-size:12px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:16px; }
+  .hero h1 { font-size:36px; font-weight:900; color:var(--text-bright); line-height:1.2; margin-bottom:12px; }
+  .hero .sub { font-size:14px; color:var(--text-dim); font-weight:300; }
+
+  /* 시스템 플로우 */
+  .flow-section { margin:48px 0; }
+  .flow { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px; padding:32px 20px; background:var(--card); border:1px solid var(--card-border); border-radius:16px; }
+  .flow-step { text-align:center; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:600; }
+  .flow-step.input { background:var(--blue-dim); color:var(--blue); border:1px solid rgba(59,130,246,0.2); }
+  .flow-step.process { background:var(--accent-glow); color:var(--accent); border:1px solid rgba(99,102,241,0.2); }
+  .flow-step.data { background:var(--green-dim); color:var(--green); border:1px solid rgba(34,197,94,0.2); }
+  .flow-step.output { background:var(--orange-dim); color:var(--orange); border:1px solid rgba(249,115,22,0.2); }
+  .flow-arrow { color:var(--text-dim); font-size:18px; }
+  .flow-sub { font-size:10px; font-weight:400; display:block; margin-top:2px; opacity:0.7; }
+
+  /* 통합 요약 */
+  .summary-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin:32px 0; }
+  .summary-item { background:var(--card); border:1px solid var(--card-border); border-radius:12px; padding:20px; text-align:center; }
+  .summary-item .label { font-size:11px; color:var(--text-dim); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+  .summary-item .big { font-size:28px; font-weight:900; }
+  .summary-item .detail { font-size:11px; color:var(--text-dim); margin-top:4px; }
+  .c-accent { color:var(--accent); }
+  .c-green { color:var(--green); }
+  .c-orange { color:var(--orange); }
+  .c-blue { color:var(--blue); }
+  .c-cyan { color:var(--cyan); }
+
+  /* 통합 전후 비교 */
+  .compare-box { background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:28px; margin:32px 0; }
+  .compare-box h3 { font-size:14px; font-weight:700; color:var(--text-bright); margin-bottom:16px; }
+  .merge-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:12px; }
+  .merge-row:last-child { border-bottom:none; }
+  .merge-from { flex:1; color:var(--text-dim); }
+  .merge-from s { text-decoration:line-through; opacity:0.5; }
+  .merge-arrow { color:var(--accent); font-weight:700; flex-shrink:0; }
+  .merge-to { flex:0 0 200px; font-weight:600; color:var(--accent); }
+
+  /* 데이터 카드 */
+  .divider { margin:56px 0 24px; padding-bottom:12px; border-bottom:1px solid var(--card-border); display:flex; align-items:baseline; gap:12px; }
+  .divider h2 { font-size:22px; font-weight:700; color:var(--text-bright); }
+  .divider .tag { font-size:11px; font-weight:600; padding:3px 10px; border-radius:6px; }
+  .tag-core { background:var(--accent-glow); color:var(--accent); }
+  .tag-ref { background:var(--cyan-dim); color:var(--cyan); }
+  .tag-content { background:var(--orange-dim); color:var(--orange); }
+
+  .master-card { background:var(--card); border:1px solid var(--card-border); border-radius:16px; margin-bottom:28px; overflow:hidden; }
+  .master-header { padding:24px 28px; border-bottom:1px solid var(--card-border); }
+  .master-header h3 { font-size:18px; font-weight:700; color:var(--text-bright); margin-bottom:6px; }
+  .master-header .desc { font-size:12px; color:var(--text-dim); }
+  .master-header .merged { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .merged-tag { font-size:10px; padding:2px 8px; border-radius:4px; background:rgba(99,102,241,0.08); color:var(--accent); border:1px solid rgba(99,102,241,0.15); }
+  .master-body { padding:24px 28px; }
+
+  .col-section { margin-bottom:24px; }
+  .col-section-label { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px; padding:4px 10px; border-radius:4px; display:inline-block; }
+  .col-label-basic { background:rgba(99,102,241,0.1); color:var(--accent); }
+  .col-label-price { background:var(--green-dim); color:var(--green); }
+  .col-label-logistics { background:var(--blue-dim); color:var(--blue); }
+  .col-label-content { background:var(--orange-dim); color:var(--orange); }
+  .col-label-sample { background:var(--cyan-dim); color:var(--cyan); }
+  .col-label-grade { background:var(--pink-dim); color:var(--pink); }
+  .col-label-guide { background:var(--yellow-dim); color:var(--yellow); }
+  .col-label-cost { background:rgba(239,68,68,0.1); color:var(--red); }
+  .col-label-calc { background:var(--green-dim); color:var(--green); }
+
+  .t { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:4px; }
+  .t th { text-align:left; padding:8px 12px; background:rgba(99,102,241,0.08); color:var(--accent); font-weight:600; font-size:11px; border-bottom:1px solid var(--card-border); white-space:nowrap; }
+  .t td { padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.03); vertical-align:top; }
+  .t tr.ex td { background:rgba(34,197,94,0.04); }
+  .t .new { color:var(--green); font-weight:600; }
+
+  .note { font-size:12px; color:var(--text-dim); margin-top:12px; padding:10px 14px; background:rgba(255,255,255,0.02); border-radius:8px; border-left:2px solid var(--card-border); }
+  .note strong { color:var(--text); }
+
+  .key-tag { display:inline-block; font-size:9px; font-weight:700; padding:1px 6px; border-radius:3px; margin-left:4px; vertical-align:middle; }
+  .key-pk { background:rgba(234,179,8,0.2); color:var(--yellow); }
+  .key-fk { background:rgba(59,130,246,0.2); color:var(--blue); }
+
+  .uses-bar { display:flex; flex-wrap:wrap; gap:6px; margin-top:16px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.04); }
+  .uses-bar .label { font-size:10px; color:var(--text-dim); margin-right:4px; line-height:22px; }
+  .use-chip { font-size:10px; padding:3px 10px; border-radius:12px; background:rgba(255,255,255,0.04); color:var(--text-dim); border:1px solid rgba(255,255,255,0.06); }
+
+  .guide-steps { margin:12px 0; padding:0; }
+  .guide-steps li { list-style:none; display:flex; gap:10px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:12px; }
+  .guide-steps li:last-child { border-bottom:none; }
+  .guide-steps .sn { width:22px; height:22px; border-radius:6px; background:rgba(99,102,241,0.1); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; }
+
+  .formula { background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.15); border-radius:10px; padding:16px 20px; margin:16px 0; font-family:'SF Mono',Menlo,monospace; font-size:13px; color:var(--green); text-align:center; }
+  .formula small { display:block; font-size:11px; color:var(--text-dim); margin-top:6px; font-family:'Noto Sans KR',sans-serif; }
+
+  @media (max-width:768px) {
+    .flow { flex-direction:column; }
+    .flow-arrow { transform:rotate(90deg); }
+    .t { font-size:11px; } .t th,.t td { padding:6px 8px; }
+    .merge-row { flex-direction:column; gap:4px; }
+    .merge-to { flex:1; }
+    .summary-grid { grid-template-columns:repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+  <div class="hero-label">Data Architecture</div>
+  <h1>빌드어스 데이터 구조</h1>
+  <div class="sub">17개 항목 → 5개 마스터 + 4개 보조 &middot; 하나의 데이터가 여러 곳에서 쓰이는 구조 &middot; 2026-03-29</div>
+</div>
+
+
+<!-- ═══════════ 시스템 플로우 ═══════════ -->
+<div class="flow-section">
+  <div class="flow">
+    <div class="flow-step input">도면 입력<span class="flow-sub">면적 추출</span></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-step data">공간 면적<span class="flow-sub">#6 면적 참조</span></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-step process">공정 결정<span class="flow-sub">#3 공정 마스터</span></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-step data">자재 × 수량<span class="flow-sub">#2 매핑 (소요량×로스율)</span></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-step data">가격 계산<span class="flow-sub">#1 자재 마스터</span></div>
+    <div class="flow-arrow">&rarr;</div>
+    <div class="flow-step output">자동 견적서<span class="flow-sub">공정별 자재비+인건비</span></div>
+  </div>
+</div>
+
+
+<!-- ═══════════ 통합 요약 ═══════════ -->
+<div class="summary-grid">
+  <div class="summary-item"><div class="label">마스터 테이블</div><div class="big c-accent">5개</div><div class="detail">자재 · 매핑 · 공정 · 호환성 · 공급사</div></div>
+  <div class="summary-item"><div class="label">보조 테이블</div><div class="big c-cyan">4개</div><div class="detail">면적 · 아파트비용 · Q&A · SEO</div></div>
+  <div class="summary-item"><div class="label">기존 분리</div><div class="big c-orange">17개</div><div class="detail">→ 9개로 통합</div></div>
+  <div class="summary-item"><div class="label">자동 견적 핵심</div><div class="big c-green">3개</div><div class="detail">#1 자재 + #2 매핑 + #6 면적</div></div>
+</div>
+
+
+<!-- ═══════════ 통합 전후 비교 ═══════════ -->
+<div class="compare-box">
+  <h3>통합 전 → 후</h3>
+  <div class="merge-row">
+    <div class="merge-from"><s>자재 카탈로그+가격</s> + <s>인터넷 최저가</s> + <s>배송 정보</s> + <s>샘플 정보</s> + <s>상품 설명</s> + <s>스타일/등급 변형</s></div>
+    <div class="merge-arrow">&rarr;</div>
+    <div class="merge-to">#1 자재 마스터</div>
+  </div>
+  <div class="merge-row">
+    <div class="merge-from"><s>공정-자재 매핑</s> + <s>단위 소요량+로스율</s></div>
+    <div class="merge-arrow">&rarr;</div>
+    <div class="merge-to">#2 공정-자재 매핑</div>
+  </div>
+  <div class="merge-row">
+    <div class="merge-from"><s>시공 가이드</s> + <s>적정 단가</s> + <s>표준 공정 순서</s></div>
+    <div class="merge-arrow">&rarr;</div>
+    <div class="merge-to">#3 공정 마스터</div>
+  </div>
+  <div class="merge-row">
+    <div class="merge-from"><s>자재 호환성</s></div>
+    <div class="merge-arrow">&rarr;</div>
+    <div class="merge-to">#4 호환성 테이블</div>
+  </div>
+  <div class="merge-row">
+    <div class="merge-from"><s>공급사 정보</s></div>
+    <div class="merge-arrow">&rarr;</div>
+    <div class="merge-to">#5 공급사 테이블</div>
+  </div>
+  <div class="merge-row">
+    <div class="merge-from"><s>공간 유형별 면적</s> / <s>아파트별 비용</s> / <s>Q&A 변환</s> / <s>SEO 키워드</s></div>
+    <div class="merge-arrow">&rarr;</div>
+    <div class="merge-to">#6~9 보조 테이블</div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 마스터 테이블 1: 자재 마스터 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="divider">
+  <h2>#1 자재 마스터</h2>
+  <span class="tag tag-core">CORE — 자동 견적의 가격 엔진</span>
+</div>
+
+<div class="master-card">
+  <div class="master-header">
+    <h3>자재 마스터 테이블</h3>
+    <div class="desc">자재 1개 = 1행. 가격, 배송, 샘플, 설명, 등급까지 전부 이 테이블에.</div>
+    <div class="merged">
+      <span class="merged-tag">기존 #1 카탈로그+가격</span>
+      <span class="merged-tag">기존 #2 인터넷 최저가</span>
+      <span class="merged-tag">기존 #4 배송 정보</span>
+      <span class="merged-tag">기존 #5 샘플 정보</span>
+      <span class="merged-tag">기존 #6 상품 설명</span>
+      <span class="merged-tag">기존 #14 스타일/등급</span>
+    </div>
+  </div>
+  <div class="master-body">
+
+    <!-- 기본 정보 -->
+    <div class="col-section">
+      <div class="col-section-label col-label-basic">기본 정보</div>
+      <table class="t">
+        <thead><tr>
+          <th>자재코드 <span class="key-tag key-pk">PK</span></th><th>품명</th><th>규격</th><th>브랜드</th><th>제조사</th><th>카테고리</th><th>단위</th><th>판매단위</th>
+        </tr></thead>
+        <tbody><tr class="ex">
+          <td>WP-001</td><td>수성 방수액</td><td>18L</td><td>아이나비</td><td>OO화학</td><td>방수</td><td>L</td><td>통(18L)</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+    <!-- 가격 -->
+    <div class="col-section">
+      <div class="col-section-label col-label-price">가격 (우리가 + 시장가)</div>
+      <table class="t">
+        <thead><tr>
+          <th>도매가</th><th>업체가</th><th>판매가</th><th>쿠팡가</th><th>네이버 최저가</th><th>절약금액</th><th>시장가 조사일</th>
+        </tr></thead>
+        <tbody><tr class="ex">
+          <td>35,000</td><td>42,000</td><td>45,000</td><td>58,000</td><td>52,000</td><td>7,000 (13%)</td><td>2026-04-01</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+    <!-- 물류 -->
+    <div class="col-section">
+      <div class="col-section-label col-label-logistics">물류/배송</div>
+      <table class="t">
+        <thead><tr>
+          <th>무게(kg)</th><th>배송 방법</th><th>예상 배송일</th><th>배송비 기준</th><th>공급사코드 <span class="key-tag key-fk">FK</span></th>
+        </tr></thead>
+        <tbody><tr class="ex">
+          <td>20</td><td>화물</td><td>2~3일</td><td>착불 or 5만 이상 무료</td><td>SUP-001</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+    <!-- 샘플 -->
+    <div class="col-section">
+      <div class="col-section-label col-label-sample">샘플</div>
+      <table class="t">
+        <thead><tr>
+          <th>샘플 가능</th><th>샘플 크기</th><th>무료/유료</th><th>샘플 비용</th>
+        </tr></thead>
+        <tbody><tr class="ex">
+          <td>N</td><td>—</td><td>—</td><td>—</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+    <!-- 콘텐츠 -->
+    <div class="col-section">
+      <div class="col-section-label col-label-content">상품 설명/콘텐츠</div>
+      <table class="t">
+        <thead><tr>
+          <th>한줄 요약</th><th>특징 (불릿)</th><th>주의사항</th><th>사진 경로</th>
+        </tr></thead>
+        <tbody><tr class="ex">
+          <td>욕실 바닥/벽 방수. 2회 도포로 완벽 방수.</td><td>수성/친환경, 2회 도포, 부직포 보강 권장</td><td>5도 이하 시공 불가</td><td>/img/WP-001/</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+    <!-- 등급 -->
+    <div class="col-section">
+      <div class="col-section-label col-label-grade">스타일/등급</div>
+      <table class="t">
+        <thead><tr>
+          <th>스타일 태그</th><th>등급</th><th>추천 공간</th>
+        </tr></thead>
+        <tbody>
+          <tr class="ex"><td>—</td><td>표준</td><td>욕실, 베란다</td></tr>
+        </tbody>
+      </table>
+      <div class="note">스타일 구분 없는 자재(방수, 배관 등)는 스타일 "—". 등급 = 경제 / 표준 / 프리미엄.</div>
+    </div>
+
+    <div class="uses-bar">
+      <span class="label">사용처:</span>
+      <span class="use-chip">마켓플레이스</span>
+      <span class="use-chip">비용 분석기</span>
+      <span class="use-chip">가격 투명성 UI</span>
+      <span class="use-chip">수량 계산기</span>
+      <span class="use-chip">상품 상세페이지</span>
+      <span class="use-chip">샘플 배송</span>
+      <span class="use-chip">견적서</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 마스터 테이블 2: 공정-자재 매핑 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="divider">
+  <h2>#2 공정-자재 매핑</h2>
+  <span class="tag tag-core">CORE — 자동 견적의 물량 산출 엔진</span>
+</div>
+
+<div class="master-card">
+  <div class="master-header">
+    <h3>공정-자재 매핑 테이블</h3>
+    <div class="desc">공정 하나에 필요한 자재 목록 + 각 자재의 소요량/로스율까지 한 행에.</div>
+    <div class="merged">
+      <span class="merged-tag">기존 #8 공정-자재 매핑</span>
+      <span class="merged-tag">기존 #9 소요량+로스율</span>
+    </div>
+  </div>
+  <div class="master-body">
+    <table class="t">
+      <thead><tr>
+        <th>공정코드 <span class="key-tag key-fk">FK</span></th>
+        <th>자재코드 <span class="key-tag key-fk">FK</span></th>
+        <th>용도</th>
+        <th>필수/선택</th>
+        <th>단위</th>
+        <th>1㎡당 소요량</th>
+        <th>로스율(%)</th>
+        <th>비고</th>
+      </tr></thead>
+      <tbody>
+        <tr class="ex"><td>PROC-04</td><td>WP-001</td><td>방수층 형성</td><td>필수</td><td>L</td><td>0.6</td><td>10</td><td>2회 도포 (1회 0.3L)</td></tr>
+        <tr class="ex"><td>PROC-04</td><td>WP-002</td><td>보강재</td><td>필수</td><td>㎡</td><td>1.05</td><td>5</td><td>겹침 5cm 포함</td></tr>
+        <tr class="ex"><td>PROC-04</td><td>WP-003</td><td>바탕 처리</td><td>선택</td><td>L</td><td>0.1</td><td>5</td><td>구축 바닥일 때만</td></tr>
+        <tr class="ex"><td>PROC-08</td><td>TL-012</td><td>바닥 마감</td><td>필수</td><td>장</td><td>2.8</td><td>10</td><td>커팅 손실 포함</td></tr>
+        <tr class="ex"><td>PROC-09</td><td>PT-005</td><td>벽면 도장</td><td>필수</td><td>L</td><td>0.15</td><td>5</td><td>2회 도장 기준</td></tr>
+      </tbody>
+    </table>
+
+    <div class="formula">
+      자재 수량 = 면적(㎡) &times; 1㎡당 소요량 &times; (1 + 로스율/100)
+      <small>자재비 = 자재 수량 &divide; 판매단위 &times; 판매가 (올림 처리)</small>
+    </div>
+
+    <div class="note">
+      <strong>핵심:</strong> 이 테이블이 도면 면적과 자재 마스터를 연결하는 브릿지.<br>
+      도면에서 "욕실 바닥 4.5㎡" 나오면 → 이 테이블에서 방수 공정 자재 조회 → 자재 마스터에서 가격 가져옴 → 견적 자동 완성.
+    </div>
+
+    <div class="uses-bar">
+      <span class="label">사용처:</span>
+      <span class="use-chip">비용 분석기 (물량 산출)</span>
+      <span class="use-chip">수량 계산기</span>
+      <span class="use-chip">자동 견적서</span>
+      <span class="use-chip">AI 챗봇 (자재 추천)</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 마스터 테이블 3: 공정 마스터 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="divider">
+  <h2>#3 공정 마스터</h2>
+  <span class="tag tag-core">CORE — 공정 정보 + 가이드 + 단가 통합</span>
+</div>
+
+<div class="master-card">
+  <div class="master-header">
+    <h3>공정 마스터 테이블</h3>
+    <div class="desc">공정 1개 = 1행. 순서, 단가, 가이드 전부 여기에.</div>
+    <div class="merged">
+      <span class="merged-tag">기존 #7 시공 가이드</span>
+      <span class="merged-tag">기존 #11 적정 단가</span>
+      <span class="merged-tag">기존 #12 표준 공정 순서</span>
+    </div>
+  </div>
+  <div class="master-body">
+
+    <!-- 공정 기본 + 순서 -->
+    <div class="col-section">
+      <div class="col-section-label col-label-basic">기본 + 순서</div>
+      <table class="t">
+        <thead><tr>
+          <th>공정코드 <span class="key-tag key-pk">PK</span></th><th>공정명</th><th>순서</th><th>선행 공정</th><th>시공일</th><th>양생일</th><th>합계일</th>
+        </tr></thead>
+        <tbody>
+          <tr class="ex"><td>PROC-01</td><td>철거</td><td>1</td><td>—</td><td>2일</td><td>—</td><td>2일</td></tr>
+          <tr class="ex"><td>PROC-02</td><td>설비(배관)</td><td>2</td><td>PROC-01</td><td>2일</td><td>—</td><td>2일</td></tr>
+          <tr class="ex"><td>PROC-04</td><td>방수</td><td>3</td><td>PROC-02</td><td>1일</td><td>2일</td><td>3일</td></tr>
+          <tr class="ex"><td>PROC-08</td><td>타일</td><td>4</td><td>PROC-04</td><td>3일</td><td>1일</td><td>4일</td></tr>
+          <tr class="ex"><td>PROC-09</td><td>도장</td><td>5</td><td>—</td><td>2일</td><td>1일</td><td>3일</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 단가 -->
+    <div class="col-section">
+      <div class="col-section-label col-label-cost">적정 단가</div>
+      <table class="t">
+        <thead><tr>
+          <th>자재비 (㎡당)</th><th>인건비 (㎡당)</th><th>적정 합계 범위</th><th>기능공 일당</th><th>㎡당 소요 공수</th>
+        </tr></thead>
+        <tbody>
+          <tr class="ex"><td>1~2만</td><td>2~3만</td><td>3~5만/㎡</td><td>25만/일</td><td>0.1인·일</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 시공 가이드 -->
+    <div class="col-section">
+      <div class="col-section-label col-label-guide">시공 가이드 (문서 필드)</div>
+      <ul class="guide-steps">
+        <li><div class="sn">1</div><div><strong>개요</strong> — 뭔지, 왜 하는지, 안 하면 어떻게 되는지</div></li>
+        <li><div class="sn">2</div><div><strong>필요 도구</strong> — 자재 외 도구 (롤러, 헤라, 테이프 등)</div></li>
+        <li><div class="sn">3</div><div><strong>시공 순서</strong> — 단계별: 작업 + 주의점 + 자주 하는 실수</div></li>
+        <li><div class="sn">4</div><div><strong>양생/건조 조건</strong> — 시간, 온도, 하면 안 되는 것</div></li>
+        <li><div class="sn">5</div><div><strong>완료 확인법</strong> — 잘 됐는지 검수 방법</div></li>
+        <li><div class="sn">6</div><div><strong>셀프 난이도</strong> — 상/중/하 + 코멘트</div></li>
+      </ul>
+      <div class="note">시공 가이드는 엑셀이 아닌 <strong>문서(마크다운)</strong>로 작성. 유튜브 대본 + 챗봇 지식으로 재사용.</div>
+    </div>
+
+    <div class="uses-bar">
+      <span class="label">사용처:</span>
+      <span class="use-chip">프로젝트 관리 (공정표)</span>
+      <span class="use-chip">견적 비교기 (적정가)</span>
+      <span class="use-chip">가이드 페이지</span>
+      <span class="use-chip">유튜브 대본</span>
+      <span class="use-chip">AI 챗봇</span>
+      <span class="use-chip">비용 분석기 (인건비)</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 마스터 테이블 4: 호환성 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="divider">
+  <h2>#4 호환성 테이블</h2>
+  <span class="tag tag-core">CORE</span>
+</div>
+
+<div class="master-card">
+  <div class="master-header">
+    <h3>자재 호환성 테이블</h3>
+    <div class="desc">자재 A &times; 자재 B 조합. NG/조건부만 기록 (OK는 기록 안 함).</div>
+  </div>
+  <div class="master-body">
+    <table class="t">
+      <thead><tr>
+        <th>자재코드 A <span class="key-tag key-fk">FK</span></th>
+        <th>자재코드 B <span class="key-tag key-fk">FK</span></th>
+        <th>판정</th>
+        <th>사유</th>
+        <th>대체 추천</th>
+      </tr></thead>
+      <tbody>
+        <tr class="ex"><td>WP-010 (유성 방수재)</td><td>BA-003 (수성 본드)</td><td style="color:var(--red);font-weight:700;">NG</td><td>유성 위에 수성 부착력 없음</td><td>BA-007 (에폭시 본드)</td></tr>
+        <tr class="ex"><td>WP-020 (시멘트 방수재)</td><td>TL-050 (PVC 타일)</td><td style="color:var(--yellow);font-weight:700;">조건부</td><td>완전 경화(72시간) 후에만 가능</td><td>—</td></tr>
+      </tbody>
+    </table>
+
+    <div class="uses-bar">
+      <span class="label">사용처:</span>
+      <span class="use-chip">호환성 체커</span>
+      <span class="use-chip">마켓플레이스 경고</span>
+      <span class="use-chip">AI 챗봇</span>
+      <span class="use-chip">장바구니 검증</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 마스터 테이블 5: 공급사 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="divider">
+  <h2>#5 공급사 테이블</h2>
+  <span class="tag tag-core">CORE</span>
+</div>
+
+<div class="master-card">
+  <div class="master-header">
+    <h3>공급사 테이블</h3>
+    <div class="desc">공급사 1개 = 1행. 자재 마스터에서 공급사코드(FK)로 연결.</div>
+  </div>
+  <div class="master-body">
+    <table class="t">
+      <thead><tr>
+        <th>공급사코드 <span class="key-tag key-pk">PK</span></th><th>공급사명</th><th>취급 카테고리</th><th>리드타임</th><th>최소 주문</th><th>반품 조건</th><th>결제 조건</th><th>연락처</th>
+      </tr></thead>
+      <tbody>
+        <tr class="ex"><td>SUP-001</td><td>OO건자재</td><td>방수, 도장</td><td>2영업일</td><td>10만원</td><td>미개봉 7일</td><td>월말 정산</td><td>010-XXXX</td></tr>
+        <tr class="ex"><td>SUP-002</td><td>XX세라믹</td><td>타일</td><td>3~5영업일</td><td>30만원</td><td>파손만 교환</td><td>선결제</td><td>010-XXXX</td></tr>
+      </tbody>
+    </table>
+
+    <div class="uses-bar">
+      <span class="label">사용처:</span>
+      <span class="use-chip">마켓플레이스 운영</span>
+      <span class="use-chip">배송 관리</span>
+      <span class="use-chip">입점 관리</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 보조 테이블들 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="divider">
+  <h2>#6~9 보조 테이블</h2>
+  <span class="tag tag-ref">REFERENCE</span>
+</div>
+
+<!-- 6 공간 면적 -->
+<div class="master-card">
+  <div class="master-header">
+    <h3>#6 공간 유형별 표준 면적</h3>
+    <div class="desc">비용 분석기 기본값. 사용자가 직접 입력 안 할 때 참조.</div>
+  </div>
+  <div class="master-body">
+    <table class="t">
+      <thead><tr><th>평형대</th><th>욕실(㎡)</th><th>주방(㎡)</th><th>거실(㎡)</th><th>안방(㎡)</th><th>작은방(㎡)</th><th>베란다(㎡)</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>18평 (59㎡)</td><td>3.5</td><td>5</td><td>14</td><td>10</td><td>7</td><td>5</td></tr>
+        <tr class="ex"><td>25평 (84㎡)</td><td>4.5</td><td>7</td><td>20</td><td>13</td><td>9</td><td>7</td></tr>
+        <tr class="ex"><td>34평 (112㎡)</td><td>5.5</td><td>9</td><td>28</td><td>16</td><td>11</td><td>9</td></tr>
+      </tbody>
+    </table>
+    <div class="uses-bar">
+      <span class="label">사용처:</span>
+      <span class="use-chip">비용 분석기</span>
+      <span class="use-chip">수량 계산기 기본값</span>
+    </div>
+  </div>
+</div>
+
+<!-- 7 아파트별 비용 -->
+<div class="master-card">
+  <div class="master-header">
+    <h3>#7 아파트별 비용 추정</h3>
+    <div class="desc">단지별 1장. SEO 랜딩 콘텐츠. 경험 기반 추정이면 충분.</div>
+  </div>
+  <div class="master-body">
+    <table class="t">
+      <thead><tr><th>단지명</th><th>평형</th><th>공정</th><th>셀프 자재비</th><th>반셀프</th><th>업체 의뢰</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>래미안 OO</td><td>25평</td><td>욕실 방수</td><td>15만</td><td>40만</td><td>60만</td></tr>
+        <tr class="ex"><td>래미안 OO</td><td>25평</td><td>욕실 타일</td><td>35만</td><td>80만</td><td>120만</td></tr>
+      </tbody>
+    </table>
+    <div class="uses-bar">
+      <span class="label">사용처:</span>
+      <span class="use-chip">SEO 랜딩 페이지</span>
+      <span class="use-chip">비용 분석기 참고</span>
+    </div>
+  </div>
+</div>
+
+<!-- 8 Q&A -->
+<div class="master-card">
+  <div class="master-header">
+    <h3>#8 체크리스트 Q&A 변환</h3>
+    <div class="desc">체크리스트 항목을 "소비자 질문 → 답변" 쌍으로 변환. AI 챗봇 RAG 소스.</div>
+  </div>
+  <div class="master-body">
+    <table class="t">
+      <thead><tr><th>공정</th><th>질문</th><th>답변</th><th>관련 자재코드</th><th>출처</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>방수</td><td>욕실 방수 꼭 해야 하나요?</td><td>네, 필수. 안 하면 아래층 누수 → 보상 문제.</td><td>WP-001</td><td>체크리스트 04 #3</td></tr>
+      </tbody>
+    </table>
+    <div class="uses-bar">
+      <span class="label">사용처:</span>
+      <span class="use-chip">AI 구매 어시스턴트</span>
+    </div>
+  </div>
+</div>
+
+<!-- 9 SEO -->
+<div class="master-card">
+  <div class="master-header">
+    <h3>#9 SEO 키워드 리스트</h3>
+    <div class="desc">검색 유입용 키워드. 콘텐츠 기획 참고.</div>
+  </div>
+  <div class="master-body">
+    <table class="t">
+      <thead><tr><th>키워드</th><th>월간 검색량</th><th>경쟁도</th><th>검색 의도</th><th>연결 기능</th></tr></thead>
+      <tbody>
+        <tr class="ex"><td>래미안 인테리어 비용</td><td>1,200</td><td>중</td><td>정보 탐색</td><td>아파트별 비용 페이지</td></tr>
+        <tr class="ex"><td>셀프 방수 방법</td><td>800</td><td>중</td><td>가이드</td><td>시공 가이드 + 마켓플레이스</td></tr>
+      </tbody>
+    </table>
+    <div class="uses-bar">
+      <span class="label">사용처:</span>
+      <span class="use-chip">SEO 콘텐츠 기획</span>
+      <span class="use-chip">유튜브 제목/태그</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════ 테이블 관계도 ═══════════ -->
+<div class="divider">
+  <h2>테이블 관계</h2>
+</div>
+
+<div class="master-card">
+  <div class="master-body">
+    <div style="font-family:'SF Mono',Menlo,monospace; font-size:13px; line-height:2.2; color:var(--text-dim); padding:20px; overflow-x:auto;">
+<pre style="margin:0; white-space:pre;">
+<span style="color:var(--blue);">#5 공급사</span>
+    │ 1:N
+    ▼
+<span style="color:var(--accent); font-weight:700;">#1 자재 마스터</span> ◄──────── <span style="color:var(--yellow);">#4 호환성</span> (자재A × 자재B)
+    │
+    │ N:M (through #2)
+    ▼
+<span style="color:var(--green); font-weight:700;">#2 공정-자재 매핑</span>  ←  면적(㎡) × 소요량 × (1+로스율) = 물량
+    │
+    │ N:1
+    ▼
+<span style="color:var(--orange); font-weight:700;">#3 공정 마스터</span>  ←  가이드 + 단가 + 순서
+    │
+    ├── <span style="color:var(--cyan);">#6 면적 참조</span>  (평형대 → 공간별 ㎡)
+    ├── <span style="color:var(--cyan);">#7 아파트 비용</span>  (SEO)
+    ├── <span style="color:var(--cyan);">#8 Q&A</span>  (챗봇)
+    └── <span style="color:var(--cyan);">#9 SEO 키워드</span>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+<span style="color:var(--green);font-weight:700;">자동 견적 흐름:</span>
+도면(면적) → <span style="color:var(--cyan);">#6</span> 기본면적 → <span style="color:var(--orange);">#3</span> 공정 선택 → <span style="color:var(--green);">#2</span> 물량 산출 → <span style="color:var(--accent);">#1</span> 가격 → 견적서
+</pre>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════ 자동 견적 계산 예시 ═══════════ -->
+<div class="divider">
+  <h2>자동 견적 계산 예시</h2>
+</div>
+
+<div class="master-card">
+  <div class="master-header">
+    <h3>욕실 방수 — 25평 아파트</h3>
+    <div class="desc">도면에서 욕실 바닥 4.5㎡ 추출 → 자동 견적 계산 과정</div>
+  </div>
+  <div class="master-body">
+    <table class="t">
+      <thead><tr>
+        <th>단계</th><th>참조 테이블</th><th>계산</th><th>결과</th>
+      </tr></thead>
+      <tbody>
+        <tr class="ex">
+          <td style="font-weight:600;">1. 면적</td><td>#6 면적 참조</td><td>25평 욕실 바닥</td><td><strong>4.5 ㎡</strong></td>
+        </tr>
+        <tr class="ex">
+          <td style="font-weight:600;">2. 공정</td><td>#3 공정 마스터</td><td>방수 선택</td><td><strong>PROC-04</strong></td>
+        </tr>
+        <tr class="ex">
+          <td style="font-weight:600;">3-a. 물량</td><td>#2 매핑</td><td>방수액: 4.5 × 0.6 × 1.1</td><td><strong>2.97L → 1통(18L)</strong></td>
+        </tr>
+        <tr class="ex">
+          <td style="font-weight:600;">3-b. 물량</td><td>#2 매핑</td><td>부직포: 4.5 × 1.05 × 1.05</td><td><strong>4.96㎡ → 1롤(5㎡)</strong></td>
+        </tr>
+        <tr class="ex">
+          <td style="font-weight:600;">4-a. 자재비</td><td>#1 자재 마스터</td><td>방수액 1통 × 45,000</td><td><strong>45,000원</strong></td>
+        </tr>
+        <tr class="ex">
+          <td style="font-weight:600;">4-b. 자재비</td><td>#1 자재 마스터</td><td>부직포 1롤 × 15,000</td><td><strong>15,000원</strong></td>
+        </tr>
+        <tr class="ex">
+          <td style="font-weight:600;">5. 인건비</td><td>#3 공정 마스터</td><td>4.5㎡ × 0.1인·일 × 250,000</td><td><strong>112,500원</strong></td>
+        </tr>
+        <tr>
+          <td style="font-weight:900; color:var(--green);">합계</td><td></td><td></td><td style="font-weight:900; color:var(--green); font-size:14px;">172,500원</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="formula">
+      셀프 자재비: 60,000원 &nbsp;|&nbsp; 반셀프: 172,500원 &nbsp;|&nbsp; 쿠팡 구매 시: 73,000원 (13,000원 더)
+      <small>모든 숫자가 테이블 3개(#1, #2, #3)에서 자동 계산됨</small>
+    </div>
+  </div>
+</div>
+
+
+<div style="text-align:center;margin-top:60px;">
+  <p style="font-size:14px;color:var(--text-dim);">빌드어스 데이터 아키텍처 &middot; 2026-03-29</p>
+  <p style="font-size:11px;color:var(--text-dim);margin-top:4px;">17개 분리 항목 → 5 마스터 + 4 보조 통합</p>
+</div>
+
+</div>
+</body>
+</html>
